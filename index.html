@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A local guessing game built from a fixed set of chat messages and people. Who said it?"
+    />
+    <meta name="theme-color" content="#08060e" />
+    <title>whodunchat - who said it in your chat?</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Faustina:ital,wght@0,400..600;1,400&family=Courier+Prime:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="data.js"></script>
+    <script src="guess-options.js"></script>
+
+    <style>
+      :root {
+        --ground: oklch(14% .008 25);
+        --ground-2: oklch(18.5% .009 25);
+        --rule: oklch(34% .012 25);
+        --rule-soft: oklch(26% .01 25);
+        --paper: oklch(95.5% .004 70);
+        --paper-dim: oklch(78% .008 60);
+        --news: oklch(88.5% .006 65);
+        --news-shade: oklch(81.5% .008 62);
+        --news-ink: oklch(19% .006 40);
+        --news-ink-dim: oklch(42% .008 45);
+        --stamp: oklch(56% .208 27);
+        --stamp-bright: oklch(64% .213 30);
+        --ember: oklch(72% .185 55);
+        --ember-hot: oklch(85% .16 82);
+        --font-head: "Big Shoulders Display", "Arial Narrow", sans-serif;
+        --font-text: "Faustina", Georgia, serif;
+        --font-file: "Courier Prime", "Courier New", monospace;
+        --fs-micro: .9rem;
+        --fs-meta: .94rem;
+        --fs-ui: 1.06rem;
+        --fs-body: 1.09rem;
+        --fs-kicker: 1.3rem;
+        --tap: 44px;
+        --track-label: .11em;
+        --ease: cubic-bezier(.22, 1, .36, 1);
+        --ease-strong: cubic-bezier(.16, 1, .3, 1);
+        color-scheme: dark;
+      }
+      @media (width>=700px) {
+        :root {
+          --fs-micro: .72rem;
+          --fs-meta: .8rem;
+          --track-label: .16em;
+          --fs-ui: .95rem;
+          --fs-body: 1rem;
+          --fs-kicker: 1.2rem;
+          --tap: 0px;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body, #app { height: 100%; margin: 0; }
+      body {
+        background: var(--ground);
+        color: var(--paper);
+        font-family: var(--font-text);
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      button:disabled { cursor: not-allowed; }
+      :focus-visible { outline: 2px solid var(--ember-hot); outline-offset: 2px; }
+
+      .app { isolation: isolate; min-height: 100%; position: relative; }
+      .bg-layer {
+        z-index: -2;
+        background-color: var(--ground);
+        background-image:
+          repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in oklch, var(--paper) 2%, transparent) 3px 4px),
+          radial-gradient(60% 45% at 50% 0%, color-mix(in oklch, var(--paper) 4%, transparent), transparent 70%);
+        position: fixed;
+        inset: 0;
+      }
+
+      .home {
+        flex-direction: column;
+        min-height: 100vh;
+        padding: clamp(1.25rem, 4vw, 2.75rem) clamp(1rem, 4vw, 2rem) 3rem;
+        display: flex;
+      }
+      .home-inner {
+        width: min(52rem, 100%);
+        animation: page-in .52s var(--ease) both;
+        margin: auto;
+      }
+      @keyframes page-in {
+        0% { opacity: 0; transform: translateY(12px); }
+      }
+
+      .masthead { margin-bottom: 2.25rem; }
+      .logo {
+        font-family: var(--font-head);
+        letter-spacing: -.022em;
+        text-transform: uppercase;
+        color: var(--paper);
+        text-wrap: balance;
+        margin: .5rem 0 .35rem;
+        font-size: clamp(3.2rem, 15vw, 5.75rem);
+        font-weight: 900;
+        line-height: .84;
+      }
+      .logo-char {
+        animation: char-set .52s var(--ease-strong) both;
+        animation-delay: calc(var(--i) * 26ms);
+        display: inline-block;
+      }
+      @keyframes char-set {
+        0% { opacity: 0; transform: translateY(-.14em); }
+      }
+
+      .press-rule {
+        border: 0;
+        border-top: 3px solid var(--paper);
+        border-bottom: 1px solid var(--paper);
+        height: 0;
+        margin: 0;
+        padding-top: 3px;
+      }
+      .dateline {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--paper-dim);
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        display: flex;
+      }
+
+      .home-body {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+        grid-template-areas: "filing spotlight";
+        align-items: start;
+        gap: clamp(1.5rem, 5vw, 3.25rem);
+        margin-top: 2rem;
+        display: grid;
+      }
+      @media (width<=900px) {
+        .home-body {
+          grid-template-columns: 1fr;
+          grid-template-areas: "filing" "spotlight";
+        }
+        .spotlight { align-self: start; }
+      }
+
+      .filing { grid-area: filing; gap: 1.1rem; display: grid; }
+      .spotlight { grid-area: spotlight; align-self: stretch; }
+
+      .field-label {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--paper-dim);
+        margin-bottom: .4rem;
+        display: block;
+      }
+
+      .play-btn {
+        border: 2px solid var(--stamp-bright);
+        background: var(--stamp);
+        color: var(--paper);
+        font-family: var(--font-head);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        transition: background .15s var(--ease), transform .15s var(--ease), border-color .15s var(--ease);
+        padding: .95rem 1.5rem;
+        font-size: 1.35rem;
+        font-weight: 900;
+      }
+      .play-btn:hover:not(:disabled) { background: var(--stamp-bright); transform: translateY(-1px); }
+      .play-btn:active:not(:disabled) { transform: translateY(1px); }
+      .play-btn:disabled {
+        background: var(--ground-2);
+        border-color: var(--rule);
+        color: var(--paper-dim);
+      }
+
+      .secondary-btn {
+        border: 1px solid var(--paper);
+        color: var(--paper);
+        font-family: var(--font-head);
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        transition: background .15s var(--ease), color .15s var(--ease);
+        background: 0 0;
+        padding: .85rem 1.4rem;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+      .secondary-btn:hover:not(:disabled) { background: var(--paper); color: var(--ground); }
+
+      .ghost-btn {
+        min-height: var(--tap);
+        color: var(--paper-dim);
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        transition: color .15s var(--ease);
+        background: 0 0;
+        border: 0;
+        justify-content: center;
+        align-items: center;
+        padding: .4rem .6rem;
+        display: inline-flex;
+      }
+      .ghost-btn:hover { color: var(--paper); }
+
+      .case-status {
+        font-family: var(--font-file);
+        font-size: var(--fs-meta);
+        letter-spacing: .04em;
+        color: var(--paper-dim);
+        margin: -.2rem 0 0;
+        line-height: 1.6;
+      }
+      .case-status strong { color: var(--paper); font-weight: 700; }
+
+      .notice {
+        border: 1px solid var(--stamp);
+        border-top: 3px solid var(--stamp);
+        background: color-mix(in oklch, var(--stamp) 12%, var(--ground));
+        font-size: var(--fs-body);
+        padding: .85rem .95rem;
+        line-height: 1.55;
+      }
+      .notice p { margin: 0; }
+
+      .desk-card {
+        background: var(--ground-2);
+        border: 1px solid var(--rule);
+        height: 100%;
+        transform: rotate(var(--tilt, 0deg));
+        flex-direction: column;
+        padding: clamp(1.15rem, 3vw, 1.7rem) clamp(1.1rem, 2.6vw, 1.5rem) clamp(1.2rem, 3vw, 1.6rem);
+        display: flex;
+        box-shadow: 5px 6px oklch(0% none none / .5);
+        animation: card-in .42s var(--ease-strong) both;
+      }
+      @keyframes card-in {
+        0% { opacity: 0; transform: translateX(28px) rotate(calc(var(--tilt, 0deg) * 2.5)); }
+        to { opacity: 1; transform: translateX(0) rotate(var(--tilt, 0deg)); }
+      }
+      .desk-head {
+        border-bottom: 1px solid var(--rule-soft);
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--paper-dim);
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        padding-bottom: .55rem;
+        display: flex;
+      }
+      .desk-name {
+        font-family: var(--font-head);
+        letter-spacing: .01em;
+        text-transform: uppercase;
+        text-wrap: balance;
+        margin: .75rem 0 .15rem;
+        font-size: clamp(1.9rem, 5vw, 2.5rem);
+        font-weight: 900;
+        line-height: .95;
+      }
+      .desk-body {
+        font-size: var(--fs-body);
+        color: var(--paper-dim);
+        text-wrap: pretty;
+        --cap-lines: calc(var(--fs-body) * 1.62 * 2);
+        --cap-box: calc(var(--cap-lines) - 3px);
+        margin: .85rem 0 0;
+        line-height: 1.62;
+      }
+      .desk-cap {
+        float: left;
+        height: var(--cap-box);
+        font-family: var(--font-head);
+        font-size: calc(var(--cap-lines) * .86);
+        font-weight: 900;
+        line-height: var(--cap-box);
+        color: var(--paper);
+        transform: translateY(calc(var(--cap-lines) * .058));
+        margin: 0 .12em 0 0;
+      }
+      .desk-fill {
+        background-image: repeating-linear-gradient(to bottom, transparent 0 1.5rem, var(--rule-soft) 1.5rem calc(1.5rem + 1px));
+        flex: auto;
+        min-height: 2.4rem;
+        margin-top: 1.15rem;
+      }
+      .desk-standing {
+        border-top: 1px solid var(--rule-soft);
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .02em;
+        color: var(--paper-dim);
+        margin: 0;
+        padding-top: .7rem;
+        line-height: 1.65;
+      }
+
+      .colophon { margin-top: 2.5rem; }
+      .colophon-line {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        color: var(--paper-dim);
+        margin: 0;
+        line-height: 1.7;
+      }
+      .colophon-line + .colophon-line { margin-top: .35rem; }
+
+      .game { flex-direction: column; min-height: 100vh; display: flex; }
+      .game-main {
+        flex-direction: column;
+        flex: 1;
+        justify-content: center;
+        gap: 1.15rem;
+        width: min(46rem, 100%);
+        margin: 0 auto;
+        padding: clamp(1rem, 4vw, 2rem) clamp(.9rem, 3vw, 1.5rem) 2.5rem;
+        display: flex;
+      }
+      .stub-card {
+        background: var(--news);
+        color: var(--news-ink);
+        animation: exhibit-in .46s var(--ease-strong) both;
+        padding: 1.5rem 1.6rem 1.7rem;
+        box-shadow: 6px 7px oklch(0% none none / .55);
+      }
+      @keyframes exhibit-in {
+        0% { opacity: 0; transform: translateY(-14px) rotate(-.85deg); }
+      }
+      .stub-title {
+        font-family: var(--font-head);
+        text-transform: uppercase;
+        color: var(--stamp);
+        margin: 0 0 .35rem;
+        font-size: clamp(2rem, 8vw, 3rem);
+        font-weight: 900;
+        line-height: .9;
+      }
+      .stub-body {
+        font-family: var(--font-text);
+        font-size: var(--fs-body);
+        color: var(--news-ink-dim);
+        margin: 0 0 .4rem;
+        line-height: 1.55;
+      }
+      .stub-actions { margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <div class="bg-layer"></div>
+
+      <!-- ================= HOME ================= -->
+      <section class="home" id="screen-home">
+        <div class="home-inner">
+          <header class="masthead">
+            <div class="dateline">
+              <span>The Local Chat Enquirer</span>
+              <span id="dateline-date"></span>
+            </div>
+            <h1 class="logo" id="logo"></h1>
+            <hr class="press-rule" />
+          </header>
+
+          <div class="home-body">
+            <div class="filing" id="filing">
+              <div>
+                <span class="field-label">New case</span>
+                <button class="play-btn" id="btn-start">Open the case</button>
+              </div>
+
+              <p class="case-status" id="case-status"></p>
+
+              <button class="ghost-btn" id="btn-reset">start a fresh run</button>
+            </div>
+
+            <aside class="spotlight">
+              <article class="desk-card" style="--tilt: .6deg">
+                <div class="desk-head">
+                  <span>Case file</span>
+                  <span>local · fixed record</span>
+                </div>
+                <h2 class="desk-name">Who said it?</h2>
+                <p class="desk-body">
+                  <span class="desk-cap">A</span>
+                  person from the record is picked at random and one of their chat
+                  messages lands on the desk. Pick the name you think typed it.
+                  Get it wrong and another message and three clues turn up. Three
+                  wrong names and the suspect walks.
+                </p>
+                <div class="desk-fill"></div>
+                <p class="desk-standing">Every person is a guessing target once per run. Correct guesses close the file; a wrong third guess sends you back to the front page.</p>
+              </article>
+            </aside>
+          </div>
+
+          <footer class="colophon">
+            <p class="colophon-line">A local homage to whodunchat by DuckSaint — powered by a fixed set of people and messages in <strong style="color: var(--paper); font-weight: 600;">data.js</strong>.</p>
+            <p class="colophon-line" id="pool-line"></p>
+          </footer>
+        </div>
+      </section>
+
+      <!-- ================= GAME (stub for Phase 1) ================= -->
+      <section class="game" id="screen-game" hidden>
+        <div class="game-main">
+          <article class="stub-card">
+            <h2 class="stub-title">The case room opens in Phase 2</h2>
+            <p class="stub-body" id="stub-line"></p>
+            <div class="stub-actions">
+              <button class="secondary-btn" id="btn-back">← back to the front page</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var STORAGE_KEY = "peri_whodunchat_used";
+
+        var DATA = window.WHODUNCHAT_DATA || null;
+        var OPTIONS = window.WHODUNCHAT_OPTIONS || [];
+        var roster = DATA && Array.isArray(DATA.people) ? DATA.people : [];
+        var channel = DATA && typeof DATA.channel === "string" ? DATA.channel : "";
+
+        /* ---------- storage helpers ---------- */
+        function readUsed() {
+          try {
+            var raw = sessionStorage.getItem(STORAGE_KEY);
+            var list = raw ? JSON.parse(raw) : [];
+            return Array.isArray(list) ? list : [];
+          } catch (e) {
+            return [];
+          }
+        }
+        function writeUsed(list) {
+          try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+          } catch (e) {}
+        }
+        function clearUsed() {
+          try {
+            sessionStorage.removeItem(STORAGE_KEY);
+          } catch (e) {}
+        }
+
+        /* ---------- validation ---------- */
+        function warn(message) {
+          console.warn("[whodunchat] " + message);
+          return message;
+        }
+
+        function validate() {
+          var problems = [];
+          if (!DATA) {
+            problems.push(warn("data.js did not load. Check the file path."));
+            return problems;
+          }
+          if (!channel) problems.push(warn("data.js is missing a channel name."));
+
+          var seen = {};
+          roster.forEach(function (person) {
+            if (!person || typeof person !== "object") return;
+            if (!person.id) problems.push(warn(person.name || "(unnamed)" + " has no id."));
+            if (seen[person.id]) problems.push(warn("duplicate id \"" + person.id + "\"."));
+            seen[person.id] = true;
+            if (!person.name) problems.push(warn("a person with id \"" + person.id + "\" has no name."));
+            if (!Array.isArray(person.statements) || person.statements.length < 4)
+              problems.push(warn(person.name + " has " + (person.statements ? person.statements.length : 0) + " statements; needs at least 4."));
+            if (person.followedAt && Number.isNaN(Date.parse(person.followedAt)))
+              problems.push(warn(person.name + " has an unparseable followedAt date."));
+            if (typeof person.messages !== "number" || person.messages < 0)
+              problems.push(warn(person.name + " needs a numeric messages count."));
+            if (person.subMonths !== null && person.subMonths !== undefined && (typeof person.subMonths !== "number" || person.subMonths < 0))
+              problems.push(warn(person.name + " subMonths must be a number or null."));
+            ["videoWin", "videoLose"].forEach(function (field) {
+              var url = person[field];
+              if (url && !isDriveLink(url))
+                problems.push(warn(person.name + " " + field + " is not a parseable Google Drive link."));
+            });
+          });
+
+          OPTIONS.forEach(function (o) {
+            if (!o || typeof o !== "object" || !o.name)
+              problems.push(warn("guess-options.js contains an option without a name."));
+          });
+
+          return problems;
+        }
+
+        function isDriveLink(url) {
+          try {
+            var u = new URL(url);
+            return u.hostname === "drive.google.com" && /\/file\/d\//.test(u.pathname);
+          } catch (e) {
+            return false;
+          }
+        }
+
+        /* ---------- guess pool merge + dedupe ---------- */
+        function buildGuessPool() {
+          var pool = [];
+          var keys = {};
+
+          function add(entry, source) {
+            if (!entry || !entry.name) return;
+            var nameKey = "name:" + String(entry.name).toLowerCase();
+            if (keys[nameKey]) return;
+            if (entry.id && keys["id:" + entry.id]) return;
+            keys[nameKey] = true;
+            if (entry.id) keys["id:" + entry.id] = true;
+            pool.push({
+              id: entry.id || null,
+              name: entry.name,
+              source: source
+            });
+          }
+
+          roster.forEach(function (p) { add({ id: p.id, name: p.name }, "roster"); });
+          OPTIONS.forEach(function (o) { add(o, "options"); });
+
+          return pool;
+        }
+
+        /* ---------- progress ---------- */
+        function renderProgress(poolCount) {
+          var used = readUsed();
+          var remaining = roster.length - used.length;
+          var el = document.getElementById("case-status");
+
+          if (roster.length === 0) {
+            el.innerHTML = "No people on the record yet — add some to <strong>data.js</strong>.";
+            document.getElementById("btn-start").disabled = true;
+            return;
+          }
+          if (remaining <= 0) {
+            el.innerHTML = "Every person on the record is <strong>solved</strong>. Start a fresh run to clear it.";
+            return;
+          }
+          el.innerHTML = "<strong>" + remaining + " of " + roster.length +
+            "</strong> people still on the record" +
+            (used.length ? " (" + used.length + " already closed this launch)" : "") +
+            " · <strong>" + poolCount + "</strong> names on the record.";
+        }
+
+        /* ---------- screen switching ---------- */
+        function showScreen(name) {
+          var home = document.getElementById("screen-home");
+          var game = document.getElementById("screen-game");
+          var showGame = name === "game";
+          home.hidden = showGame;
+          game.hidden = !showGame;
+        }
+
+        /* ---------- boot ---------- */
+        function init() {
+          var logo = document.getElementById("logo");
+          var text = "whodunchat";
+          logo.innerHTML = "";
+          text.split("").forEach(function (ch, i) {
+            var span = document.createElement("span");
+            span.className = "logo-char";
+            span.style.setProperty("--i", i);
+            span.textContent = ch;
+            logo.appendChild(span);
+          });
+
+          var dateEl = document.getElementById("dateline-date");
+          dateEl.textContent = new Intl.DateTimeFormat("en-GB", {
+            day: "numeric", month: "short", year: "numeric", timeZone: "UTC"
+          }).format(new Date());
+
+          var problems = validate();
+          var pool = buildGuessPool();
+
+          console.log("[whodunchat] channel: " + (channel || "(none)"));
+          console.log("[whodunchat] roster people: " + roster.length);
+          console.log("[whodunchat] guess pool (" + pool.length + "): " +
+            pool.map(function (p) { return p.name; }).join(", "));
+          if (problems.length) {
+            console.warn("[whodunchat] validation found " + problems.length + " problem(s).");
+          } else {
+            console.log("[whodunchat] validation clean.");
+          }
+
+          var notice = document.createElement("div");
+          if (!DATA) {
+            notice.className = "notice";
+            notice.innerHTML = "<p>data.js did not load — check that it sits next to index.html.</p>";
+            document.getElementById("filing").prepend(notice);
+          } else if (problems.length) {
+            notice.className = "notice";
+            notice.innerHTML = "<p>Validation found " + problems.length +
+              " problem(s) — see the browser console for details.</p>";
+            document.getElementById("filing").prepend(notice);
+          }
+
+          document.getElementById("pool-line").textContent =
+            "Guess pool built from guess-options.js + data.js · " + pool.length +
+            " names (" + (pool.length - roster.length) + " decoys).";
+
+          renderProgress(pool.length);
+
+          document.getElementById("btn-start").addEventListener("click", function () {
+            document.getElementById("stub-line").textContent =
+              "The guessing game lands here in Phase 2. " + roster.length +
+              " people and " + pool.length + " names are wired and waiting.";
+            showScreen("game");
+          });
+          document.getElementById("btn-back").addEventListener("click", function () {
+            showScreen("home");
+          });
+          document.getElementById("btn-reset").addEventListener("click", function () {
+            clearUsed();
+            renderProgress(pool.length);
+          });
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+      })();
+    </script>
+  </body>
+</html>
