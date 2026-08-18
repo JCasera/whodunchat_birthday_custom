@@ -1704,10 +1704,8 @@ you start a fresh run.
 
         function scrollToGuess() {
           try {
-            var guess = document.querySelectorAll("#guess")[0];
-            if (!guess || typeof guess.scrollIntoView !== "function") return;
             var doScroll = function () {
-              guess.scrollIntoView({ block: "end", behavior: "smooth" });
+              window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
             };
             if (typeof setTimeout === "function") setTimeout(doScroll, 650);
             else doScroll();
