@@ -505,17 +505,17 @@
       }
       .wanted-paid-item { margin: 0; }
       .wanted-paid-item strong { font-weight: 700; }
-      .wanted-paid-hint {
-        color: color-mix(in oklch, var(--news-ink) 55%, transparent);
-        padding-left: .55rem;
-        position: relative;
+      .wanted-paid-hints {
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 .5rem;
       }
-      .wanted-paid-hint:before {
-        content: "→";
-        position: absolute;
-        left: 0;
-        color: color-mix(in oklch, var(--news-ink) 40%, transparent);
-      }
+      .hint { font-weight: 700; }
+      .hint.is-pos { color: var(--hit); }
+      .hint.is-neg { color: var(--ember-hot); }
+      .hint.is-same { color: color-mix(in oklch, var(--news-ink) 50%, transparent); }
+      .hint-sep { color: color-mix(in oklch, var(--news-ink) 35%, transparent); }
 
       .guess {
         display: grid;
@@ -1080,17 +1080,23 @@ four guesses. Miss all four and the suspect walks.
             var t = Date.parse(target.followedAt);
             var o = Date.parse(g.followedAt);
             var days = Math.abs(t - o) / 86400000;
-            lines.push("followed — " + (days <= 7 ? "about the same time" : t < o ? "earlier" : "later"));
+            if (days <= 7) lines.push({ text: "followed about the same time", cls: "same" });
+            else if (t < o) lines.push({ text: "followed earlier", cls: "neg" });
+            else lines.push({ text: "followed later", cls: "pos" });
           }
           if (typeof target.subMonths === "number" && typeof g.subMonths === "number") {
             var d = target.subMonths - g.subMonths;
-            lines.push("subbed — " + (Math.abs(d) <= 1 ? "about as long" : d > 0 ? "longer" : "shorter"));
+            if (Math.abs(d) <= 1) lines.push({ text: "subbed about as long", cls: "same" });
+            else if (d > 0) lines.push({ text: "subbed longer", cls: "pos" });
+            else lines.push({ text: "subbed shorter", cls: "neg" });
           }
           if (typeof target.messages === "number" && typeof g.messages === "number") {
             var ratio = target.messages / g.messages;
-            lines.push("chats — " + (ratio >= 0.75 && ratio <= 1.25 ? "about as much" : target.messages > g.messages ? "more" : "less"));
+            if (ratio >= 0.75 && ratio <= 1.25) lines.push({ text: "chats about as much", cls: "same" });
+            else if (target.messages > g.messages) lines.push({ text: "chats more", cls: "pos" });
+            else lines.push({ text: "chats less", cls: "neg" });
           }
-          if (!lines.length) lines.push("nothing to compare");
+          if (!lines.length) lines.push({ text: "nothing to compare", cls: "same" });
           return lines;
         }
 
@@ -1101,9 +1107,15 @@ four guesses. Miss all four and the suspect walks.
           notes.forEach(function (m) {
             html += '<p class="wanted-paid-item">Ruled out <strong>' + esc(m.name) +
               '</strong></p>';
-            hintLines(round.person, m.name).forEach(function (line) {
-              html += '<p class="wanted-paid-item wanted-paid-hint">' + esc(line) + '</p>';
-            });
+            var hints = hintLines(round.person, m.name);
+            if (hints.length) {
+              html += '<p class="wanted-paid-hints">';
+              hints.forEach(function (h, k) {
+                if (k) html += '<span class="hint-sep">·</span>';
+                html += '<span class="hint is-' + h.cls + '">' + esc(h.text) + '</span>';
+              });
+              html += '</p>';
+            }
           });
           return html + '</div>';
         }
