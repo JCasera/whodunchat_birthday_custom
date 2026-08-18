@@ -360,6 +360,15 @@
         text-overflow: ellipsis;
         overflow: hidden;
       }
+      .hud-streak {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--ember);
+        white-space: nowrap;
+      }
+      .hud-streak[hidden] { display: none; }
       .case-no {
         font-family: var(--font-head);
         font-size: clamp(1.2rem, 4.2vw, 1.95rem);
@@ -369,6 +378,20 @@
         white-space: nowrap;
         font-weight: 800;
       }
+      .pips {
+        align-items: center;
+        gap: .35rem;
+        margin-left: .8rem;
+        display: flex;
+      }
+      .pip {
+        width: .55rem;
+        height: .55rem;
+        border: 1px solid var(--rule);
+        background: var(--ground-2);
+        border-radius: 999px;
+      }
+      .pip.is-lit { background: var(--stamp-bright); border-color: var(--stamp-bright); }
 
       .exhibit-label {
         font-weight: 400;
@@ -482,6 +505,17 @@
       }
       .wanted-paid-item { margin: 0; }
       .wanted-paid-item strong { font-weight: 700; }
+      .wanted-paid-hint {
+        color: color-mix(in oklch, var(--news-ink) 55%, transparent);
+        padding-left: .55rem;
+        position: relative;
+      }
+      .wanted-paid-hint:before {
+        content: "→";
+        position: absolute;
+        left: 0;
+        color: color-mix(in oklch, var(--news-ink) 40%, transparent);
+      }
 
       .guess {
         display: grid;
@@ -687,6 +721,9 @@
 
               <p class="case-status" id="case-status"></p>
 
+              <p class="case-status" id="streak-line" hidden></p>
+              <p class="case-status" id="records-line" hidden></p>
+
               <button class="ghost-btn" id="btn-reset">start a fresh run</button>
               <button class="ghost-btn" id="btn-debug">debug: off</button>
             </div>
@@ -721,11 +758,13 @@ four guesses. Miss all four and the suspect walks.
               <button class="ghost-btn" id="btn-drop">← drop case</button>
             </div>
             <div class="hud-right">
+              <span class="hud-streak" id="hud-streak" hidden></span>
               <span class="hud-channel" id="hud-channel"></span>
             </div>
           </div>
           <div class="hud-bar">
             <span class="case-no" id="case-no">Statement 1 of 4</span>
+            <span class="pips" id="pips"></span>
           </div>
         </header>
 
@@ -768,6 +807,8 @@ four guesses. Miss all four and the suspect walks.
 
         var STORAGE_KEY = "peri_whodunchat_used";
         var DEBUG_KEY = "peri_whodunchat_debug";
+        var STREAK_KEY = "peri_whodunchat_streak";
+        var RECORDS_KEY = "peri_whodunchat_records";
 
         var DATA = window.WHODUNCHAT_DATA || null;
         var OPTIONS = window.WHODUNCHAT_OPTIONS || [];
@@ -793,6 +834,33 @@ four guesses. Miss all four and the suspect walks.
           try {
             sessionStorage.removeItem(STORAGE_KEY);
           } catch (e) {}
+        }
+        function readStreak() {
+          try {
+            var n = parseInt(sessionStorage.getItem(STREAK_KEY), 10);
+            return isNaN(n) || n < 0 ? 0 : n;
+          } catch (e) { return 0; }
+        }
+        function writeStreak(n) {
+          try {
+            sessionStorage.setItem(STREAK_KEY, String(n));
+          } catch (e) {}
+        }
+        function readRecords() {
+          try {
+            var obj = JSON.parse(sessionStorage.getItem(RECORDS_KEY) || "{}");
+            return obj && typeof obj === "object" ? obj : {};
+          } catch (e) { return {}; }
+        }
+        function writeRecords(obj) {
+          try {
+            sessionStorage.setItem(RECORDS_KEY, JSON.stringify(obj));
+          } catch (e) {}
+        }
+        function clearRun() {
+          clearUsed();
+          try { sessionStorage.removeItem(STREAK_KEY); } catch (e) {}
+          try { sessionStorage.removeItem(RECORDS_KEY); } catch (e) {}
         }
 
         /* ---------- validation ---------- */
@@ -832,8 +900,17 @@ four guesses. Miss all four and the suspect walks.
           });
 
           OPTIONS.forEach(function (o) {
-            if (!o || typeof o !== "object" || !o.name)
+            if (!o || typeof o !== "object" || !o.name) {
               problems.push(warn("guess-options.js contains an option without a name."));
+              return;
+            }
+            if (o.followedAt && Number.isNaN(Date.parse(o.followedAt)))
+              problems.push(warn(o.name + " has an unparseable followedAt date."));
+            if (o.subMonths !== undefined && o.subMonths !== null &&
+                (typeof o.subMonths !== "number" || o.subMonths < 0))
+              problems.push(warn(o.name + " subMonths must be a number or null."));
+            if (o.messages !== undefined && (typeof o.messages !== "number" || o.messages < 0))
+              problems.push(warn(o.name + " messages must be a non-negative number."));
           });
 
           return problems;
@@ -863,11 +940,14 @@ four guesses. Miss all four and the suspect walks.
             pool.push({
               id: entry.id || null,
               name: entry.name,
-              source: source
+              source: source,
+              followedAt: entry.followedAt,
+              subMonths: entry.subMonths,
+              messages: entry.messages
             });
           }
 
-          roster.forEach(function (p) { add({ id: p.id, name: p.name }, "roster"); });
+          roster.forEach(function (p) { add(p, "roster"); });
           OPTIONS.forEach(function (o) { add(o, "options"); });
 
           return pool;
@@ -878,6 +958,7 @@ four guesses. Miss all four and the suspect walks.
           var used = readUsed();
           var remaining = roster.length - used.length;
           var el = document.getElementById("case-status");
+          renderHomeMeta();
 
           if (roster.length === 0) {
             el.innerHTML = "No people on the record yet — add some to <strong>data.js</strong>.";
@@ -984,6 +1065,35 @@ four guesses. Miss all four and the suspect walks.
           return n < 10 ? "0" + n : String(n);
         }
 
+        function poolEntryByName(name) {
+          for (var i = 0; i < pool.length; i++) {
+            if (pool[i].name === name) return pool[i];
+          }
+          return null;
+        }
+
+        function hintLines(target, guessedName) {
+          var g = poolEntryByName(guessedName);
+          var lines = [];
+          if (!g) return lines;
+          if (target.followedAt && g.followedAt) {
+            var t = Date.parse(target.followedAt);
+            var o = Date.parse(g.followedAt);
+            var days = Math.abs(t - o) / 86400000;
+            lines.push("followed — " + (days <= 7 ? "about the same time" : t < o ? "earlier" : "later"));
+          }
+          if (typeof target.subMonths === "number" && typeof g.subMonths === "number") {
+            var d = target.subMonths - g.subMonths;
+            lines.push("subbed — " + (Math.abs(d) <= 1 ? "about as long" : d > 0 ? "longer" : "shorter"));
+          }
+          if (typeof target.messages === "number" && typeof g.messages === "number") {
+            var ratio = target.messages / g.messages;
+            lines.push("chats — " + (ratio >= 0.75 && ratio <= 1.25 ? "about as much" : target.messages > g.messages ? "more" : "less"));
+          }
+          if (!lines.length) lines.push("nothing to compare");
+          return lines;
+        }
+
         function paidHtml(i) {
           var notes = round.misses.filter(function (m) { return m.stmt === i; });
           if (!notes.length) return "";
@@ -991,6 +1101,9 @@ four guesses. Miss all four and the suspect walks.
           notes.forEach(function (m) {
             html += '<p class="wanted-paid-item">Ruled out <strong>' + esc(m.name) +
               '</strong></p>';
+            hintLines(round.person, m.name).forEach(function (line) {
+              html += '<p class="wanted-paid-item wanted-paid-hint">' + esc(line) + '</p>';
+            });
           });
           return html + '</div>';
         }
@@ -1029,11 +1142,77 @@ four guesses. Miss all four and the suspect walks.
           });
           document.getElementById("statement-list").innerHTML = html;
 
+          renderPips();
+          renderHudStreak();
+          renderHomeMeta();
+
           if (DEBUG) {
             document.getElementById("debug-answer").textContent = round.person.name;
             document.getElementById("debug-stmt").textContent = (idx + 1) + "/" + total;
             document.getElementById("debug-next").disabled = idx >= total - 1;
           }
+        }
+
+        /* ---------- pips / streak / records (Phase 2 Step 3) ---------- */
+        function renderPips() {
+          var total = round.statements.length;
+          var lit = round.revealIndex + 1;
+          var html = "";
+          for (var i = 0; i < total; i++) {
+            html += '<span class="pip' + (i < lit ? " is-lit" : "") + '"></span>';
+          }
+          document.getElementById("pips").innerHTML = html;
+        }
+
+        function renderHudStreak() {
+          var el = document.getElementById("hud-streak");
+          var n = readStreak();
+          if (n > 0) {
+            el.textContent = "streak " + n;
+            el.hidden = false;
+          } else {
+            el.hidden = true;
+          }
+        }
+
+        function renderHomeMeta() {
+          var streakEl = document.getElementById("streak-line");
+          var streak = readStreak();
+          if (streak > 0) {
+            streakEl.innerHTML = "streak: <strong>" + streak + "</strong> in a row";
+            streakEl.hidden = false;
+          } else {
+            streakEl.hidden = true;
+          }
+
+          var records = readRecords();
+          var ids = Object.keys(records);
+          var recordsEl = document.getElementById("records-line");
+          if (ids.length) {
+            var identified = 0;
+            var walked = 0;
+            var guesses = 0;
+            ids.forEach(function (id) {
+              var r = records[id];
+              if (r && r.won) identified++;
+              else if (r) walked++;
+              if (r && typeof r.guesses === "number") guesses += r.guesses;
+            });
+            recordsEl.innerHTML = "record: <strong>" + identified + "</strong> identified · <strong>" +
+              walked + "</strong> walked · <strong>" + guesses + "</strong> guesses";
+            recordsEl.hidden = false;
+          } else {
+            recordsEl.hidden = true;
+          }
+        }
+
+        function recordResult(person, won) {
+          var records = readRecords();
+          records[person.id] = {
+            guesses: round.misses.length + (won ? 1 : 0),
+            won: won
+          };
+          writeRecords(records);
         }
 
         /* ---------- guessing (Phase 2 Step 2) ---------- */
@@ -1175,6 +1354,10 @@ four guesses. Miss all four and the suspect walks.
         function winRound(name) {
           round.state = "won";
           document.getElementById("guess-input").value = name;
+          writeStreak(readStreak() + 1);
+          recordResult(round.person, true);
+          renderHudStreak();
+          renderHomeMeta();
           var last = run.index >= run.order.length - 1;
           showRoundStatus(
             last ? "Case closed — " + name + " was the last one." : "Identified — " + name + "!",
@@ -1201,6 +1384,10 @@ four guesses. Miss all four and the suspect walks.
 
         function loseRound() {
           round.state = "lost";
+          writeStreak(0);
+          recordResult(round.person, false);
+          renderHudStreak();
+          renderHomeMeta();
           showRoundStatus("The suspect walked. It was " + round.person.name + ".", "is-miss");
           lockGuessArea();
           setupNext();
@@ -1222,7 +1409,7 @@ four guesses. Miss all four and the suspect walks.
 
         function advanceRound() {
           if (run.index >= run.order.length - 1) {
-            clearUsed();
+            clearRun();
             if (startGame()) renderRound();
             return;
           }
@@ -1323,7 +1510,7 @@ four guesses. Miss all four and the suspect walks.
             document.getElementById("guess-suggest").hidden = true;
           });
           document.getElementById("btn-reset").addEventListener("click", function () {
-            clearUsed();
+            clearRun();
             renderProgress(pool.length);
           });
           document.getElementById("btn-debug").textContent = "debug: " + (DEBUG ? "on" : "off");

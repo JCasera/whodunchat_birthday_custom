@@ -54,13 +54,20 @@ window.WHODUNCHAT_OPTIONS = [
 
 Roster people are added automatically. Duplicates are matched by `id` first, else by name (case-insensitive). List here anything you want as a guessable decoy that isn't in the roster.
 
+Decoys may carry the same hint stats as roster people (`followedAt`, `subMonths`, `messages`) if you want their "nothing to compare" guesses to show real hints instead; the app validates these if present.
+
 ## How the game works
 
 - A random roster person becomes the target (each person is a target at most **once per launch**).
-- Their first random statement is shown; pick who you think said it.
+- Their first random statement is shown; type a name to guess who said it (autocomplete + the 3 closest-name quick picks help avoid typos).
 - Correct → move to the next person.
-- Wrong → another statement is revealed plus three hints comparing the target to your guess (follower date, sub tenure, chat participation).
-- Three wrong guesses → the suspect walks and you return to the front page.
+- Wrong → another statement is revealed plus hints comparing the target to your guess:
+  - `followedAt` — earlier / later / about the same time (within ±7 days)
+  - `subMonths` — longer / shorter / about as long (within ±1 month)
+  - `messages` — more / less / about as much (within ±25%)
+  - if the guess has no comparable stats → "nothing to compare"
+- **Four misses** → the suspect walks and the answer is revealed. After any round you can continue to the next case or head back to the front page.
+- A win streak (consecutive wins) and per-person records (guesses + identified/walked) are tracked and shown on the front page.
 
 ## Progress & reset
 
@@ -69,6 +76,6 @@ Roster people are added automatically. Duplicates are matched by `id` first, els
 
 ## Phases
 
-- **Phase 1 (current):** home page, app shell, data loading/validation, guess-pool merge, progress tracking, screen navigation.
-- **Phase 2:** the guessing game screen (statements, choices, hints, win/lose flow).
+- **Phase 1:** home page, app shell, data loading/validation, guess-pool merge, progress tracking, screen navigation.
+- **Phase 2 (current):** the guessing game screen — progressive statements, typed guessing with autocomplete + closest-name quick picks, comparison hints, win/lose flow, statement pips, win streak, and per-person records.
 - **Phase 3:** per-person win/lose videos (Google Drive embeds) and the results screen.
