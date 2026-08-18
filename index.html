@@ -36,6 +36,8 @@
         --stamp-bright: oklch(64% .213 30);
         --ember: oklch(72% .185 55);
         --ember-hot: oklch(85% .16 82);
+        --hit: oklch(78% .16 152);
+        --hit-ink: oklch(12% .03 152);
         --font-head: "Big Shoulders Display", "Arial Narrow", sans-serif;
         --font-text: "Faustina", Georgia, serif;
         --font-file: "Courier Prime", "Courier New", monospace;
@@ -478,6 +480,59 @@
         display: grid;
         gap: .35rem;
       }
+      .wanted-paid-item { margin: 0; }
+      .wanted-paid-item strong { font-weight: 700; }
+
+      .guess {
+        display: grid;
+        gap: .6rem;
+      }
+      .guess-head {
+        font-family: var(--font-head);
+        font-size: var(--fs-kicker);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: var(--paper);
+      }
+      .guess-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+        gap: .5rem;
+      }
+      .guess-btn {
+        border: 1px solid var(--rule);
+        background: var(--ground-2);
+        color: var(--paper);
+        font-family: var(--font-head);
+        font-weight: 800;
+        letter-spacing: .02em;
+        transition: background .14s var(--ease), color .14s var(--ease), opacity .14s var(--ease), transform .14s var(--ease);
+        border-radius: .55rem;
+        padding: .6rem .75rem;
+      }
+      .guess-btn:hover:not(:disabled) { background: var(--stamp); color: var(--paper); transform: translateY(-1px); }
+      .guess-btn:disabled { opacity: .45; transform: none; }
+      .guess-btn.is-miss { background: var(--news); color: var(--news-ink); opacity: .65; }
+      .guess-btn.is-hit { background: var(--hit); color: var(--hit-ink); opacity: 1; }
+      .guess-btn .guess-mark { font-family: var(--font-file); font-size: .62em; letter-spacing: .08em; }
+
+      .round-status {
+        font-family: var(--font-head);
+        font-size: var(--fs-kicker);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: var(--paper);
+        text-align: center;
+      }
+      .round-status.is-hit { color: var(--hit); }
+      .round-status.is-miss { color: var(--ember-hot); }
+      .round-actions { display: grid; justify-items: center; }
+      .round-actions[hidden] { display: none; }
 
       .no-clock {
         height: var(--timer-h);
@@ -594,13 +649,13 @@
                 <h2 class="desk-name">Who said it?</h2>
                 <p class="desk-body">
                   <span class="desk-cap">A</span>
-                  person from the record is picked at random and one of their chat
-                  messages lands on the desk. Pick the name you think typed it.
-                  Get it wrong and another message and three clues turn up. Three
-                  wrong names and the suspect walks.
+person from the record is picked at random and one of their chat
+messages lands on the desk. Pick the name you think typed it.
+Get it wrong and another message turns up — four messages,
+four guesses. Miss all four and the suspect walks.
                 </p>
                 <div class="desk-fill"></div>
-                <p class="desk-standing">Every person is a guessing target once per run. Correct guesses close the file; a wrong third guess sends you back to the front page.</p>
+                <p class="desk-standing">Every person is a guessing target once per run. Correct guesses close the file; four misses send you back to the front page.</p>
               </article>
             </aside>
           </div>
@@ -630,6 +685,17 @@
           </div>
 
           <ol class="wanted-list" id="statement-list"></ol>
+
+          <section class="guess">
+            <div class="guess-head">Pick the name</div>
+            <ul class="guess-list" id="guess-list"></ul>
+          </section>
+
+          <div class="round-status" id="round-status" hidden></div>
+
+          <div class="round-actions" id="round-actions" hidden>
+            <button class="play-btn" id="btn-next">next case</button>
+          </div>
 
           <p class="no-clock">untimed case</p>
         </main>
@@ -786,6 +852,8 @@
         } catch (e) {}
         var run = null;
         var round = null;
+        var pool = [];
+        var guessButtons = {};
 
         function shuffle(list) {
           var a = list.slice();
@@ -817,18 +885,27 @@
           var unused = roster.filter(function (p) { return used.indexOf(p.id) === -1; });
           if (!unused.length) return false;
           run = { order: shuffle(unused), index: 0 };
-          round = startRound(run.order[0]);
+          startRound(run.order[0]);
           renderRound();
           return true;
         }
 
         function startRound(person) {
           markUsed(person.id);
-          return {
+          round = {
             person: person,
             statements: drawStatements(person),
-            revealIndex: 0
+            revealIndex: 0,
+            state: "active",
+            misses: []
           };
+          resetGuessButtons();
+          var status = document.getElementById("round-status");
+          status.textContent = "";
+          status.className = "round-status";
+          status.hidden = true;
+          document.getElementById("round-actions").hidden = true;
+          return round;
         }
 
         function esc(s) {
@@ -838,6 +915,17 @@
 
         function pad(n) {
           return n < 10 ? "0" + n : String(n);
+        }
+
+        function paidHtml(i) {
+          var notes = round.misses.filter(function (m) { return m.stmt === i; });
+          if (!notes.length) return "";
+          var html = '<div class="wanted-paid">';
+          notes.forEach(function (m) {
+            html += '<p class="wanted-paid-item">Ruled out <strong>' + esc(m.name) +
+              '</strong></p>';
+          });
+          return html + '</div>';
         }
 
         function renderRound() {
@@ -863,6 +951,7 @@
                 '<span class="wanted-date">' + date + '</span>' +
                 '</div>' +
                 '<p class="wanted-text">' + esc(text) + '</p>' +
+                paidHtml(i) +
                 '</div></li>';
             } else {
               html += '<li class="wanted-item is-sealed">' +
@@ -880,8 +969,112 @@
           }
         }
 
+        /* ---------- guessing (Phase 2 Step 2) ---------- */
+        function buildGuessList(pool) {
+          var list = document.getElementById("guess-list");
+          list.innerHTML = "";
+          guessButtons = {};
+          pool.forEach(function (p) {
+            var li = document.createElement("li");
+            var btn = document.createElement("button");
+            var nameSpan = document.createElement("span");
+            var mark = document.createElement("span");
+            btn.type = "button";
+            btn.className = "guess-btn";
+            nameSpan.textContent = p.name;
+            mark.className = "guess-mark";
+            btn.appendChild(nameSpan);
+            btn.appendChild(mark);
+            btn.addEventListener("click", function () { guess(p.name); });
+            guessButtons[p.name] = { btn: btn, mark: mark };
+            li.appendChild(btn);
+            list.appendChild(li);
+          });
+        }
+
+        function resetGuessButtons() {
+          Object.keys(guessButtons).forEach(function (name) {
+            var entry = guessButtons[name];
+            entry.btn.disabled = false;
+            entry.btn.classList.remove("is-hit");
+            entry.btn.classList.remove("is-miss");
+            entry.mark.textContent = "";
+          });
+        }
+
+        function guess(name) {
+          if (!round || round.state !== "active") return;
+          var entry = guessButtons[name];
+          if (!entry || entry.btn.disabled) return;
+          if (name === round.person.name) winRound(name, entry);
+          else missRound(name, entry);
+        }
+
+        function winRound(name, entry) {
+          round.state = "won";
+          Object.keys(guessButtons).forEach(function (n) {
+            guessButtons[n].btn.disabled = true;
+          });
+          entry.btn.classList.add("is-hit");
+          entry.mark.textContent = "✓";
+          var last = run.index >= run.order.length - 1;
+          showRoundStatus(
+            last ? "Case closed — " + name + " was the last one." : "Identified — " + name + "!",
+            "is-hit");
+          setupNext();
+        }
+
+        function missRound(name, entry) {
+          var stmtIndex = round.revealIndex;
+          round.misses.push({ stmt: stmtIndex, name: name });
+          entry.btn.disabled = true;
+          entry.btn.classList.add("is-miss");
+          entry.mark.textContent = "✕";
+          if (round.misses.length >= round.statements.length) {
+            loseRound();
+            return;
+          }
+          round.revealIndex++;
+          renderRound();
+        }
+
+        function loseRound() {
+          round.state = "lost";
+          Object.keys(guessButtons).forEach(function (n) {
+            guessButtons[n].btn.disabled = true;
+          });
+          showRoundStatus("The suspect walked. It was " + round.person.name + ".", "is-miss");
+          setupNext();
+        }
+
+        function showRoundStatus(text, cls) {
+          var el = document.getElementById("round-status");
+          el.textContent = text;
+          el.className = "round-status" + (cls ? " " + cls : "");
+          el.hidden = false;
+        }
+
+        function setupNext() {
+          var last = run.index >= run.order.length - 1;
+          var lost = round.state === "lost";
+          document.getElementById("btn-next").textContent =
+            (lost || last) ? "back to the front page" : "next case";
+          document.getElementById("round-actions").hidden = false;
+        }
+
+        function advanceRound() {
+          if (round.state === "lost" || run.index >= run.order.length - 1) {
+            showScreen("home");
+            renderProgress(pool.length);
+            return;
+          }
+          run.index++;
+          startRound(run.order[run.index]);
+          renderRound();
+        }
+
         function debugNext() {
-          if (!round) return;
+          if (!round || round.state !== "active") return;
           if (round.revealIndex < round.statements.length - 1) {
             round.revealIndex++;
             renderRound();
@@ -910,7 +1103,8 @@
           document.getElementById("debug-bar").hidden = !DEBUG;
 
           var problems = validate();
-          var pool = buildGuessPool();
+          pool = buildGuessPool();
+          buildGuessList(pool);
 
           console.log("[whodunchat] channel: " + (channel || "(none)"));
           console.log("[whodunchat] roster people: " + roster.length);
@@ -945,8 +1139,12 @@
           });
           document.getElementById("btn-drop").addEventListener("click", function () {
             showScreen("home");
+            renderProgress(pool.length);
           });
           document.getElementById("debug-next").addEventListener("click", debugNext);
+          document.getElementById("btn-next").addEventListener("click", function () {
+            if (round && round.state !== "active") advanceRound();
+          });
           document.getElementById("btn-reset").addEventListener("click", function () {
             clearUsed();
             renderProgress(pool.length);
