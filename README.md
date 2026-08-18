@@ -40,7 +40,7 @@ then open `http://localhost:8000`.
 ```
 
 - Every roster person needs at least **4 statements**; extra ones are never shown to the player.
-- `videoWin` / `videoLose` are for Phase 3 (outcome videos). Share the file as **Anyone with the link → Viewer**, then paste the share link. `REPLACE_WIN` / `REPLACE_LOSE` are placeholders.
+- `videoWin` / `videoLose` are for Phase 3 (outcome videos). Share the file as **Anyone with the link → Viewer**, then paste the share link. `REPLACE_WIN` / `REPLACE_LOSE` are placeholders — any URL containing `REPLACE_` is treated as "no video" and the embed is skipped.
 - On load, the app validates the data and prints warnings to the browser console (F12) if anything is off.
 
 ### `guess-options.js` — guess pool
@@ -66,8 +66,8 @@ Decoys may carry the same hint stats as roster people (`followedAt`, `subMonths`
   - `subMonths` — longer / shorter / about as long (within ±1 month)
   - `messages` — more / less / about as much (within ±25%)
   - if the guess has no comparable stats → "nothing to compare"
-- **Four misses** → the suspect walks and the answer is revealed. After any round you can continue to the next case or head back to the front page.
-- A win streak (consecutive wins) and per-person records (guesses + identified/walked) are tracked and shown on the front page.
+- **Four misses** → the suspect walks and the answer is revealed. After any round you are taken to the **outcome page**: the win/lose video (Drive `/preview` embed, if a real link is set), who the answer was with their profile stats, guesses used, run progress and streak, plus **continue** (next case) and **back to the front page** buttons.
+- A win streak (consecutive wins) and per-person records (guesses + identified/walked) are tracked and shown on the front page and the **case statistics** screen.
 
 ## Progress & reset
 
@@ -77,5 +77,5 @@ Decoys may carry the same hint stats as roster people (`followedAt`, `subMonths`
 ## Phases
 
 - **Phase 1:** home page, app shell, data loading/validation, guess-pool merge, progress tracking, screen navigation.
-- **Phase 2 (current):** the guessing game screen — progressive statements, typed guessing with autocomplete + closest-name quick picks, comparison hints, win/lose flow, statement pips, win streak, and per-person records.
-- **Phase 3:** per-person win/lose videos (Google Drive embeds) and the results screen.
+- **Phase 2:** the guessing game screen — progressive statements, typed guessing with autocomplete + closest-name quick picks, comparison hints, win/lose flow, statement pips, win streak, and per-person records.
+- **Phase 3:** per-person win/lose videos (Google Drive `/preview` embeds) on the outcome page, and the case statistics screen. Videos need the file shared as **Anyone with the link → Viewer** to play; `REPLACE_` placeholder links are skipped.

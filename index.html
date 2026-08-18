@@ -648,6 +648,18 @@
       }
       .round-actions[hidden] { display: none; }
 
+      .result-video { margin: .5rem 0 .9rem; }
+      .result-video[hidden] { display: none; }
+      .result-video iframe {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border: 1px solid var(--rule);
+        border-radius: .6rem;
+        background: var(--ground-2);
+        box-shadow: 4px 5px oklch(0% none none / .45);
+      }
+
       .no-clock {
         height: var(--timer-h);
         font-family: var(--font-file);
@@ -867,15 +879,64 @@ you start a fresh run.
             <p class="guess-hint" id="guess-hint" hidden></p>
           </section>
 
-          <div class="round-status" id="round-status" hidden></div>
-
-          <div class="round-actions" id="round-actions" hidden>
-            <button class="play-btn" id="btn-next">next case</button>
-            <button class="ghost-btn" id="btn-home">back to the front page</button>
-          </div>
-
           <p class="no-clock">untimed case</p>
         </main>
+      </section>
+
+      <!-- ================= RESULT ================= -->
+
+      <section class="home" id="screen-result" hidden>
+        <div class="home-inner">
+          <header class="masthead">
+            <div class="dateline">
+              <span>The Local Chat Enquirer</span>
+              <span id="result-date"></span>
+            </div>
+            <h1 class="logo" id="result-logo"></h1>
+            <hr class="press-rule" />
+          </header>
+
+          <div class="home-body">
+            <div class="filing" id="filing-result">
+              <div>
+                <span class="field-label">Case outcome</span>
+              </div>
+
+              <div class="round-status" id="round-status" hidden></div>
+
+              <div class="result-video" id="result-video" hidden></div>
+
+              <p class="case-status" id="result-answer"></p>
+
+              <p class="case-status" id="result-summary"></p>
+              <p class="case-status" id="result-progress"></p>
+              <p class="case-status" id="result-streak" hidden></p>
+
+              <div class="round-actions" id="round-actions" hidden>
+                <button class="play-btn" id="btn-next">next case</button>
+                <button class="ghost-btn" id="btn-home">back to the front page</button>
+              </div>
+            </div>
+
+            <aside class="spotlight">
+              <article class="desk-card" style="--tilt: .5deg">
+                <div class="desk-head">
+                  <span>Case file</span>
+                  <span>last round</span>
+                </div>
+                <h2 class="desk-name">The record so far</h2>
+                <p class="desk-body">
+                  <span class="desk-cap">C</span>
+                lose the case closed on this file. Guesses are counted, streaks
+                are kept, and every identified person stays on the record until
+                you start a fresh run.
+                </p>
+                <div class="desk-fill"></div>
+                <p class="desk-standing">Videos play from Google Drive — no sign-in needed.</p>
+              </article>
+            </aside>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -1016,6 +1077,13 @@ you start a fresh run.
           }
         }
 
+        function drivePreviewUrl(url) {
+          if (!url || /REPLACE_/i.test(url)) return null;
+          var m = /\/file\/d\/([^/]+)/.exec(url);
+          if (!m) return null;
+          return "https://drive.google.com/file/d/" + m[1] + "/preview";
+        }
+
         /* ---------- guess pool merge + dedupe ---------- */
         function buildGuessPool() {
           var pool = [];
@@ -1070,7 +1138,7 @@ you start a fresh run.
 
         /* ---------- screen switching ---------- */
         function showScreen(name) {
-          var screens = { home: "screen-home", game: "screen-game", stats: "screen-stats" };
+          var screens = { home: "screen-home", game: "screen-game", stats: "screen-stats", result: "screen-result" };
           Object.keys(screens).forEach(function (key) {
             document.getElementById(screens[key]).hidden = key !== name;
           });
@@ -1371,6 +1439,78 @@ you start a fresh run.
           grid.hidden = false;
         }
 
+        function formatStat(person) {
+          var parts = [];
+          if (person.followedAt) {
+            var d = new Date(person.followedAt);
+            parts.push("followed " + d.getUTCDate() + " " +
+              new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" })
+                .format(d) + " " + d.getUTCFullYear());
+          }
+          if (typeof person.subMonths === "number") parts.push("subbed " + person.subMonths + " months");
+          if (typeof person.messages === "number") parts.push(person.messages + " chats");
+          return parts.join(" · ");
+        }
+
+        function renderResult() {
+          var won = round.state === "won";
+          var person = round.person;
+          var url = drivePreviewUrl(won ? person.videoWin : person.videoLose);
+          var video = document.getElementById("result-video");
+          if (url) {
+            video.innerHTML = '<iframe src="' + url +
+              '" allow="autoplay" allowfullscreen loading="lazy"></iframe>';
+            video.hidden = false;
+          } else {
+            video.innerHTML = "";
+            video.hidden = true;
+          }
+
+          var answer = document.getElementById("result-answer");
+          var guesses = round.misses.length + (won ? 1 : 0);
+          if (won) {
+            answer.innerHTML = "It was <strong>" + esc(person.name) + "</strong> — identified in " +
+              guesses + (guesses === 1 ? " guess." : " guesses.");
+          } else {
+            answer.innerHTML = "It was <strong>" + esc(person.name) +
+              "</strong> — the suspect walked after 4 misses.";
+          }
+
+          var stats = formatStat(person);
+          var summary = document.getElementById("result-summary");
+          summary.innerHTML = stats ? esc(stats) : "";
+
+          var runIndex = run.index + 1;
+          var progress = document.getElementById("result-progress");
+          progress.innerHTML = "case <strong>" + runIndex + "</strong> of <strong>" +
+            run.order.length + "</strong> · " + identifiedWalked();
+          progress.hidden = false;
+
+          var streak = readStreak();
+          var streakEl = document.getElementById("result-streak");
+          if (streak > 0) {
+            streakEl.innerHTML = "streak: <strong>" + streak + "</strong> in a row";
+            streakEl.hidden = false;
+          } else {
+            streakEl.hidden = true;
+          }
+        }
+
+        function identifiedWalked() {
+          var records = readRecords();
+          var ids = Object.keys(records);
+          var identified = 0;
+          var walked = 0;
+          ids.forEach(function (id) {
+            var r = records[id];
+            if (!r) return;
+            if (r.won) identified++;
+            else walked++;
+          });
+          return "<strong>" + identified + "</strong> identified · <strong>" +
+            walked + "</strong> walked";
+        }
+
         /* ---------- guessing (Phase 2 Step 2) ---------- */
         function isRuledOut(name) {
           return round.misses.some(function (m) { return m.name === name; });
@@ -1522,6 +1662,8 @@ you start a fresh run.
             "is-hit");
           lockGuessArea();
           setupNext();
+          renderResult();
+          showScreen("result");
         }
 
         function missRound(name) {
@@ -1549,6 +1691,8 @@ you start a fresh run.
           showRoundStatus("The suspect walked. It was " + round.person.name + ".", "is-miss");
           lockGuessArea();
           setupNext();
+          renderResult();
+          showScreen("result");
         }
 
         function showRoundStatus(text, cls) {
@@ -1569,12 +1713,16 @@ you start a fresh run.
         function advanceRound() {
           if (run.index >= run.order.length - 1) {
             clearRun();
-            if (startGame()) renderRound();
+            if (startGame()) {
+              renderRound();
+              showScreen("game");
+            }
             return;
           }
           run.index++;
           startRound(run.order[run.index]);
           renderRound();
+          showScreen("game");
         }
 
         function debugNext() {
@@ -1602,6 +1750,7 @@ you start a fresh run.
         function init() {
           buildLogo("logo");
           buildLogo("stats-logo");
+          buildLogo("result-logo");
 
           var dateEl = document.getElementById("dateline-date");
           dateEl.textContent = new Intl.DateTimeFormat("en-GB", {
@@ -1609,6 +1758,8 @@ you start a fresh run.
           }).format(new Date());
           var statsDateEl = document.getElementById("stats-date");
           statsDateEl.textContent = dateEl.textContent;
+          var resultDateEl = document.getElementById("result-date");
+          resultDateEl.textContent = dateEl.textContent;
 
           document.body.setAttribute("data-debug", DEBUG ? "1" : "0");
           document.getElementById("debug-bar").hidden = !DEBUG;
