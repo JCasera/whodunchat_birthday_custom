@@ -4,7 +4,7 @@
 // ============================================================================
 
 window.WHODUNCHAT_DATA = {
-  channel: "yourchannel",
+  channel: "happybirthday",
 
   people: [
     {

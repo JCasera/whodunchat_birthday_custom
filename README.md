@@ -1,6 +1,13 @@
-# whodunchat (local)
+# whodunchat — happy birthday fan copy
 
-A local guessing game that mimics [whodunchat](https://whodunchat.ducksaint.com), using a **fixed** set of people and chat messages instead of live Twitch logs.
+A **happy birthday fan copy** of [whodunchat](https://whodunchat.ducksaint.com), the original guessing game by **DuckSaint**. It uses a **fixed** set of people and chat messages instead of live Twitch logs.
+
+This was copied on purpose to make a one-off birthday game — it is **not** the full whodunchat experience. Go play the real thing at **[whodunchat.ducksaint.com](https://whodunchat.ducksaint.com)**.
+
+## Credits
+
+- **whodunchat** is the original creation of **[DuckSaint](https://whodunchat.ducksaint.com)** — all credit for the idea and design goes to them. Play the real site at https://whodunchat.ducksaint.com.
+- This repository is an unofficial birthday fan copy built from that game's design; it is not affiliated with or endorsed by DuckSaint.
 
 ## Running it
 

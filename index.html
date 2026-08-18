@@ -8,7 +8,7 @@
       content="A local guessing game built from a fixed set of chat messages and people. Who said it?"
     />
     <meta name="theme-color" content="#08060e" />
-    <title>whodunchat - who said it in your chat?</title>
+    <title>whodunchat — a happy birthday fan copy</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -266,6 +266,23 @@
         line-height: 1.6;
       }
       .case-status strong { color: var(--paper); font-weight: 700; }
+
+      .credit-note {
+        border-top: 1px solid var(--rule);
+        margin: 1.2rem 0 0;
+        padding: .9rem 0 0;
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .04em;
+        line-height: 1.7;
+        color: var(--paper-dim);
+      }
+      .credit-note strong { color: var(--paper); }
+      .credit-note a {
+        color: var(--hit);
+        text-decoration: underline;
+        text-underline-offset: .18em;
+      }
 
       .notice {
         border: 1px solid var(--stamp);
@@ -769,13 +786,21 @@
               <button class="ghost-btn" id="btn-reset">start a fresh run</button>
               <button class="ghost-btn" id="btn-stats">case statistics</button>
               <button class="ghost-btn" id="btn-debug">debug: off</button>
+
+              <p class="credit-note">
+                This is a <strong>happy birthday fan copy</strong> of whodunchat — made for fun,
+                not the full experience. The original game is by
+                <a href="https://whodunchat.ducksaint.com" target="_blank" rel="noopener">DuckSaint</a>;
+                play the real thing at
+                <a href="https://whodunchat.ducksaint.com" target="_blank" rel="noopener">whodunchat.ducksaint.com</a>.
+              </p>
             </div>
 
             <aside class="spotlight">
               <article class="desk-card" style="--tilt: .6deg">
                 <div class="desk-head">
                   <span>Case file</span>
-                  <span>local · fixed record</span>
+                  <span>birthday fan copy</span>
                 </div>
                 <h2 class="desk-name">Who said it?</h2>
                 <p class="desk-body">
