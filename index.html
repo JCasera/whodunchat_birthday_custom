@@ -495,14 +495,52 @@
         font-weight: 800;
         color: var(--paper);
       }
-      .guess-list {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-        gap: .5rem;
+      .guess-field { display: grid; }
+      .guess-input {
+        width: 100%;
+        border: 1px solid var(--rule);
+        background: var(--ground-2);
+        color: var(--paper);
+        font-family: var(--font-head);
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        border-radius: .55rem;
+        padding: .75rem .9rem;
       }
+      .guess-input::placeholder { color: var(--paper-dim); opacity: .7; }
+      .guess-input:focus { outline: 2px solid var(--ember-hot); outline-offset: 2px; }
+      .guess-input:disabled { opacity: .55; }
+
+      .guess-suggest {
+        border: 1px solid var(--rule);
+        background: var(--ground-2);
+        border-radius: .55rem;
+        overflow: hidden;
+        display: grid;
+      }
+      .guess-suggest-btn {
+        border: 0;
+        background: 0 0;
+        color: var(--paper);
+        font-family: var(--font-head);
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-align: left;
+        padding: .5rem .9rem;
+      }
+      .guess-suggest-btn:hover { background: var(--stamp); color: var(--paper); }
+      .guess-suggest-btn + .guess-suggest-btn { border-top: 1px solid var(--rule-soft); }
+
+      .guess-closest { display: grid; gap: .45rem; }
+      .guess-closest-head {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--paper-dim);
+      }
+      .guess-closest-btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
       .guess-btn {
         border: 1px solid var(--rule);
         background: var(--ground-2);
@@ -510,15 +548,21 @@
         font-family: var(--font-head);
         font-weight: 800;
         letter-spacing: .02em;
-        transition: background .14s var(--ease), color .14s var(--ease), opacity .14s var(--ease), transform .14s var(--ease);
+        transition: background .14s var(--ease), color .14s var(--ease);
         border-radius: .55rem;
         padding: .6rem .75rem;
       }
-      .guess-btn:hover:not(:disabled) { background: var(--stamp); color: var(--paper); transform: translateY(-1px); }
-      .guess-btn:disabled { opacity: .45; transform: none; }
-      .guess-btn.is-miss { background: var(--news); color: var(--news-ink); opacity: .65; }
-      .guess-btn.is-hit { background: var(--hit); color: var(--hit-ink); opacity: 1; }
-      .guess-btn .guess-mark { font-family: var(--font-file); font-size: .62em; letter-spacing: .08em; }
+      .guess-btn:hover:not(:disabled) { background: var(--stamp); color: var(--paper); }
+      .guess-btn:disabled { opacity: .45; }
+
+      .guess-hint {
+        font-family: var(--font-file);
+        font-size: var(--fs-meta);
+        letter-spacing: .04em;
+        color: var(--paper-dim);
+        margin: 0;
+      }
+      .guess-hint.is-miss { color: var(--ember-hot); }
 
       .round-status {
         font-family: var(--font-head);
@@ -595,6 +639,7 @@
         .exhibit-label { flex-direction: column; align-items: flex-start; gap: .15rem; }
         .wanted-item-head { flex-wrap: wrap; row-gap: .35rem; }
         .wanted-date { flex-basis: 100%; }
+        .guess-closest-btns { grid-template-columns: 1fr; }
       }
       @media (prefers-reduced-motion: reduce) {
         *, :before, :after {
@@ -687,8 +732,16 @@ four guesses. Miss all four and the suspect walks.
           <ol class="wanted-list" id="statement-list"></ol>
 
           <section class="guess">
-            <div class="guess-head">Pick the name</div>
-            <ul class="guess-list" id="guess-list"></ul>
+            <div class="guess-head">Type a name</div>
+            <div class="guess-field">
+              <input class="guess-input" id="guess-input" type="text" autocomplete="off" spellcheck="false" placeholder="start typing…" />
+            </div>
+            <div class="guess-suggest" id="guess-suggest" hidden></div>
+            <div class="guess-closest" id="guess-closest" hidden>
+              <div class="guess-closest-head">closest matches — click to guess</div>
+              <div class="guess-closest-btns" id="guess-closest-btns"></div>
+            </div>
+            <p class="guess-hint" id="guess-hint" hidden></p>
           </section>
 
           <div class="round-status" id="round-status" hidden></div>
@@ -853,7 +906,6 @@ four guesses. Miss all four and the suspect walks.
         var run = null;
         var round = null;
         var pool = [];
-        var guessButtons = {};
 
         function shuffle(list) {
           var a = list.slice();
@@ -899,7 +951,15 @@ four guesses. Miss all four and the suspect walks.
             state: "active",
             misses: []
           };
-          resetGuessButtons();
+          var input = document.getElementById("guess-input");
+          input.value = "";
+          input.disabled = false;
+          var hint = document.getElementById("guess-hint");
+          hint.textContent = "";
+          hint.className = "guess-hint";
+          hint.hidden = true;
+          document.getElementById("guess-suggest").hidden = true;
+          document.getElementById("guess-closest").hidden = true;
           var status = document.getElementById("round-status");
           status.textContent = "";
           status.className = "round-status";
@@ -970,80 +1030,172 @@ four guesses. Miss all four and the suspect walks.
         }
 
         /* ---------- guessing (Phase 2 Step 2) ---------- */
-        function buildGuessList(pool) {
-          var list = document.getElementById("guess-list");
-          list.innerHTML = "";
-          guessButtons = {};
-          pool.forEach(function (p) {
-            var li = document.createElement("li");
-            var btn = document.createElement("button");
-            var nameSpan = document.createElement("span");
-            var mark = document.createElement("span");
-            btn.type = "button";
-            btn.className = "guess-btn";
-            nameSpan.textContent = p.name;
-            mark.className = "guess-mark";
-            btn.appendChild(nameSpan);
-            btn.appendChild(mark);
-            btn.addEventListener("click", function () { guess(p.name); });
-            guessButtons[p.name] = { btn: btn, mark: mark };
-            li.appendChild(btn);
-            list.appendChild(li);
+        function isRuledOut(name) {
+          return round.misses.some(function (m) { return m.name === name; });
+        }
+
+        function lev(a, b) {
+          a = String(a).toLowerCase();
+          b = String(b).toLowerCase();
+          if (!a.length) return b.length;
+          if (!b.length) return a.length;
+          var m = a.length + 1;
+          var n = b.length + 1;
+          var d = [];
+          for (var i = 0; i < m; i++) { d[i] = []; d[i][0] = i; }
+          for (var j = 0; j < n; j++) d[0][j] = j;
+          for (i = 1; i < m; i++) {
+            for (j = 1; j < n; j++) {
+              var cost = a[i - 1] === b[j - 1] ? 0 : 1;
+              d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+            }
+          }
+          return d[m - 1][n - 1];
+        }
+
+        function suggestNames(q) {
+          var low = q.toLowerCase();
+          return pool.filter(function (p) {
+            return !isRuledOut(p.name) && p.name.toLowerCase().indexOf(low) !== -1;
           });
         }
 
-        function resetGuessButtons() {
-          Object.keys(guessButtons).forEach(function (name) {
-            var entry = guessButtons[name];
-            entry.btn.disabled = false;
-            entry.btn.classList.remove("is-hit");
-            entry.btn.classList.remove("is-miss");
-            entry.mark.textContent = "";
+        function closestNames(q, limit) {
+          var trimmed = q.trim();
+          if (!trimmed) return [];
+          var low = trimmed.toLowerCase();
+          var cands = pool.filter(function (p) { return !isRuledOut(p.name); });
+          var scored = cands.map(function (p) {
+            var nameLow = p.name.toLowerCase();
+            var d = lev(low, nameLow);
+            if (low.length >= 2 && nameLow.indexOf(low) === 0) d -= 2;
+            return { name: p.name, d: d };
           });
+          scored.sort(function (a, b) {
+            return a.d - b.d || a.name.localeCompare(b.name);
+          });
+          return scored.slice(0, limit).map(function (s) { return s.name; });
+        }
+
+        function renderSuggest() {
+          var q = document.getElementById("guess-input").value;
+          var el = document.getElementById("guess-suggest");
+          el.innerHTML = "";
+          if (!q.trim() || round.state !== "active") {
+            el.hidden = true;
+            return;
+          }
+          var matches = suggestNames(q);
+          if (!matches.length) {
+            el.hidden = true;
+            return;
+          }
+          matches.forEach(function (p) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "guess-suggest-btn";
+            btn.textContent = p.name;
+            btn.addEventListener("mousedown", function (e) {
+              if (e && e.preventDefault) e.preventDefault();
+            });
+            btn.addEventListener("click", function () {
+              document.getElementById("guess-input").value = p.name;
+              document.getElementById("guess-hint").hidden = true;
+              renderGuessArea();
+            });
+            el.appendChild(btn);
+          });
+          el.hidden = false;
+        }
+
+        function renderClosest() {
+          var q = document.getElementById("guess-input").value;
+          var wrap = document.getElementById("guess-closest");
+          var el = document.getElementById("guess-closest-btns");
+          el.innerHTML = "";
+          var closest = closestNames(q, 3);
+          if (!closest.length || round.state !== "active") {
+            wrap.hidden = true;
+            return;
+          }
+          closest.forEach(function (name) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "guess-btn";
+            btn.textContent = name;
+            btn.addEventListener("click", function () { guess(name); });
+            el.appendChild(btn);
+          });
+          wrap.hidden = false;
+        }
+
+        function renderGuessArea() {
+          renderSuggest();
+          renderClosest();
+        }
+
+        function lockGuessArea() {
+          document.getElementById("guess-input").disabled = true;
+          document.getElementById("guess-suggest").hidden = true;
+          document.getElementById("guess-closest").hidden = true;
+        }
+
+        function submitTyped() {
+          var input = document.getElementById("guess-input");
+          var q = input.value.trim();
+          var hint = document.getElementById("guess-hint");
+          document.getElementById("guess-suggest").hidden = true;
+          if (!q || round.state !== "active") return;
+          var exact = pool.filter(function (p) {
+            return !isRuledOut(p.name) && p.name.toLowerCase() === q.toLowerCase();
+          })[0];
+          if (exact) {
+            guess(exact.name);
+          } else {
+            hint.textContent = "No exact match — pick from the suggestions.";
+            hint.className = "guess-hint";
+            hint.hidden = false;
+          }
         }
 
         function guess(name) {
           if (!round || round.state !== "active") return;
-          var entry = guessButtons[name];
-          if (!entry || entry.btn.disabled) return;
-          if (name === round.person.name) winRound(name, entry);
-          else missRound(name, entry);
+          if (isRuledOut(name)) return;
+          if (name === round.person.name) winRound(name);
+          else missRound(name);
         }
 
-        function winRound(name, entry) {
+        function winRound(name) {
           round.state = "won";
-          Object.keys(guessButtons).forEach(function (n) {
-            guessButtons[n].btn.disabled = true;
-          });
-          entry.btn.classList.add("is-hit");
-          entry.mark.textContent = "✓";
+          document.getElementById("guess-input").value = name;
           var last = run.index >= run.order.length - 1;
           showRoundStatus(
             last ? "Case closed — " + name + " was the last one." : "Identified — " + name + "!",
             "is-hit");
+          lockGuessArea();
           setupNext();
         }
 
-        function missRound(name, entry) {
-          var stmtIndex = round.revealIndex;
-          round.misses.push({ stmt: stmtIndex, name: name });
-          entry.btn.disabled = true;
-          entry.btn.classList.add("is-miss");
-          entry.mark.textContent = "✕";
+        function missRound(name) {
+          round.misses.push({ stmt: round.revealIndex, name: name });
+          var hint = document.getElementById("guess-hint");
+          hint.textContent = "Ruled out " + name + ".";
+          hint.className = "guess-hint is-miss";
+          hint.hidden = false;
+          document.getElementById("guess-input").value = "";
           if (round.misses.length >= round.statements.length) {
             loseRound();
             return;
           }
           round.revealIndex++;
           renderRound();
+          renderGuessArea();
         }
 
         function loseRound() {
           round.state = "lost";
-          Object.keys(guessButtons).forEach(function (n) {
-            guessButtons[n].btn.disabled = true;
-          });
           showRoundStatus("The suspect walked. It was " + round.person.name + ".", "is-miss");
+          lockGuessArea();
           setupNext();
         }
 
@@ -1104,7 +1256,6 @@ four guesses. Miss all four and the suspect walks.
 
           var problems = validate();
           pool = buildGuessPool();
-          buildGuessList(pool);
 
           console.log("[whodunchat] channel: " + (channel || "(none)"));
           console.log("[whodunchat] roster people: " + roster.length);
@@ -1144,6 +1295,22 @@ four guesses. Miss all four and the suspect walks.
           document.getElementById("debug-next").addEventListener("click", debugNext);
           document.getElementById("btn-next").addEventListener("click", function () {
             if (round && round.state !== "active") advanceRound();
+          });
+          var guessInput = document.getElementById("guess-input");
+          guessInput.addEventListener("input", function () {
+            document.getElementById("guess-hint").hidden = true;
+            renderGuessArea();
+          });
+          guessInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              submitTyped();
+            } else if (e.key === "Escape") {
+              document.getElementById("guess-suggest").hidden = true;
+            }
+          });
+          guessInput.addEventListener("blur", function () {
+            document.getElementById("guess-suggest").hidden = true;
           });
           document.getElementById("btn-reset").addEventListener("click", function () {
             clearUsed();
