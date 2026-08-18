@@ -552,12 +552,6 @@
       }
       .wanted-paid-item { margin: 0; }
       .wanted-paid-item strong { font-weight: 700; }
-      .wanted-paid-hints {
-        margin: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0 .5rem;
-      }
       .hint { font-weight: 700; }
       .hint.is-pos { color: oklch(42% .14 150); }
       .hint.is-neg { color: oklch(50% .22 27); }
@@ -567,13 +561,6 @@
       .guess {
         display: grid;
         gap: .6rem;
-        position: sticky;
-        bottom: clamp(.6rem, 3vw, 1.25rem);
-        z-index: 2;
-        background: color-mix(in oklch, var(--ground) 94%, transparent);
-        padding: .3rem .5rem .5rem;
-        margin: 0 -.5rem -.5rem;
-        border-radius: .7rem;
       }
       .guess-head {
         font-family: var(--font-head);
@@ -898,7 +885,7 @@ you start a fresh run.
 
           <ol class="wanted-list" id="statement-list"></ol>
 
-          <section class="guess">
+          <section class="guess" id="guess">
             <div class="guess-head">Type a name</div>
             <div class="guess-field">
               <input class="guess-input" id="guess-input" type="text" autocomplete="off" spellcheck="false" placeholder="start typing…" />
@@ -1300,17 +1287,16 @@ you start a fresh run.
           if (!notes.length) return "";
           var html = '<div class="wanted-paid">';
           notes.forEach(function (m) {
-            html += '<p class="wanted-paid-item">Ruled out <strong>' + esc(m.name) +
-              '</strong></p>';
+            html += '<p class="wanted-paid-item">Ruled out <strong>' + esc(m.name) + '</strong>';
             var hints = hintLines(round.person, m.name);
             if (hints.length) {
-              html += '<p class="wanted-paid-hints">';
+              html += ' · ';
               hints.forEach(function (h, k) {
                 if (k) html += '<span class="hint-sep">·</span>';
                 html += '<span class="hint is-' + h.cls + '">' + esc(h.text) + '</span>';
               });
-              html += '</p>';
             }
+            html += '</p>';
           });
           return html + '</div>';
         }
@@ -1713,6 +1699,16 @@ you start a fresh run.
           round.revealIndex++;
           renderRound();
           renderGuessArea();
+          scrollToGuess();
+        }
+
+        function scrollToGuess() {
+          try {
+            var guess = document.querySelectorAll("#guess")[0];
+            if (guess && typeof guess.scrollIntoView === "function") {
+              guess.scrollIntoView({ block: "end", behavior: "smooth" });
+            }
+          } catch (e) {}
         }
 
         function loseRound() {
