@@ -907,10 +907,9 @@ you start a fresh run.
               <div class="result-video" id="result-video" hidden></div>
 
               <p class="case-status" id="result-answer"></p>
-
               <p class="case-status" id="result-summary"></p>
-              <p class="case-status" id="result-progress"></p>
-              <p class="case-status" id="result-streak" hidden></p>
+
+              <div class="stats-grid" id="result-grid" hidden></div>
 
               <div class="round-actions" id="round-actions" hidden>
                 <button class="play-btn" id="btn-next">next case</button>
@@ -1385,6 +1384,26 @@ you start a fresh run.
           writeRecords(records);
         }
 
+        function fillStatGrid(gridId, tiles) {
+          var grid = document.getElementById(gridId);
+          grid.innerHTML = "";
+          tiles.forEach(function (t) {
+            var tile = document.createElement("div");
+            tile.className = "stat";
+            var label = document.createElement("span");
+            label.className = "stat-label";
+            label.textContent = t.label;
+            var value = document.createElement("strong");
+            value.className = "stat-value";
+            value.id = t.id;
+            value.textContent = t.value;
+            tile.appendChild(label);
+            tile.appendChild(value);
+            grid.appendChild(tile);
+          });
+          grid.hidden = false;
+        }
+
         function renderStats() {
           var records = readRecords();
           var ids = Object.keys(records);
@@ -1411,7 +1430,7 @@ you start a fresh run.
           }
 
           var grid = document.getElementById("stats-grid");
-          var tiles = [
+          fillStatGrid("stats-grid", [
             { id: "stat-rounds", label: "cases", value: String(rounds) },
             { id: "stat-wins", label: "identified", value: String(wins) },
             { id: "stat-losses", label: "walked", value: String(losses) },
@@ -1420,22 +1439,7 @@ you start a fresh run.
             { id: "stat-avg", label: "guesses per case", value: String(avg) },
             { id: "stat-best", label: "longest streak", value: String(readBest()) },
             { id: "stat-current", label: "current streak", value: String(readStreak()) }
-          ];
-          grid.innerHTML = "";
-          tiles.forEach(function (t) {
-            var tile = document.createElement("div");
-            tile.className = "stat";
-            var label = document.createElement("span");
-            label.className = "stat-label";
-            label.textContent = t.label;
-            var value = document.createElement("strong");
-            value.className = "stat-value";
-            value.id = t.id;
-            value.textContent = t.value;
-            tile.appendChild(label);
-            tile.appendChild(value);
-            grid.appendChild(tile);
-          });
+          ]);
           grid.hidden = false;
         }
 
@@ -1480,35 +1484,25 @@ you start a fresh run.
           var summary = document.getElementById("result-summary");
           summary.innerHTML = stats ? esc(stats) : "";
 
-          var runIndex = run.index + 1;
-          var progress = document.getElementById("result-progress");
-          progress.innerHTML = "case <strong>" + runIndex + "</strong> of <strong>" +
-            run.order.length + "</strong> · " + identifiedWalked();
-          progress.hidden = false;
-
-          var streak = readStreak();
-          var streakEl = document.getElementById("result-streak");
-          if (streak > 0) {
-            streakEl.innerHTML = "streak: <strong>" + streak + "</strong> in a row";
-            streakEl.hidden = false;
-          } else {
-            streakEl.hidden = true;
-          }
-        }
-
-        function identifiedWalked() {
           var records = readRecords();
-          var ids = Object.keys(records);
-          var identified = 0;
-          var walked = 0;
-          ids.forEach(function (id) {
+          var runIdentified = 0;
+          var runWalked = 0;
+          Object.keys(records).forEach(function (id) {
             var r = records[id];
             if (!r) return;
-            if (r.won) identified++;
-            else walked++;
+            if (r.won) runIdentified++;
+            else runWalked++;
           });
-          return "<strong>" + identified + "</strong> identified · <strong>" +
-            walked + "</strong> walked";
+
+          fillStatGrid("result-grid", [
+            { id: "stat-result-outcome", label: "outcome", value: won ? "identified" : "walked" },
+            { id: "stat-result-guesses", label: "guesses used", value: String(guesses) },
+            { id: "stat-result-statements", label: "statements revealed", value: String(round.misses.length + 1) },
+            { id: "stat-result-case", label: "case", value: (run.index + 1) + " of " + run.order.length },
+            { id: "stat-result-identified", label: "identified", value: String(runIdentified) },
+            { id: "stat-result-walked", label: "walked", value: String(runWalked) },
+            { id: "stat-result-streak", label: "streak", value: String(readStreak()) }
+          ]);
         }
 
         /* ---------- guessing (Phase 2 Step 2) ---------- */
