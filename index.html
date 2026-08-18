@@ -1414,8 +1414,9 @@ four guesses. Miss all four and the suspect walks.
 
         function setupNext() {
           var last = run.index >= run.order.length - 1;
+          var lost = round.state === "lost";
           document.getElementById("btn-next").textContent =
-            last ? "start a fresh run" : "next case";
+            last ? "start a fresh run" : (lost ? "continue" : "next case");
           document.getElementById("round-actions").hidden = false;
         }
 
