@@ -227,6 +227,36 @@
       }
       .ghost-btn:hover { color: var(--paper); }
 
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+        gap: .55rem;
+        margin: .2rem 0 1rem;
+      }
+      .stats-grid[hidden] { display: none; }
+      .stat {
+        border: 1px solid var(--rule);
+        background: var(--ground-2);
+        border-radius: .5rem;
+        padding: .7rem .8rem .8rem;
+        display: grid;
+        gap: .1rem;
+      }
+      .stat-label {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--paper-dim);
+      }
+      .stat-value {
+        font-family: var(--font-head);
+        font-size: 1.55rem;
+        line-height: 1.15;
+        color: var(--paper);
+        font-weight: 900;
+      }
+
       .case-status {
         font-family: var(--font-file);
         font-size: var(--fs-meta);
@@ -725,6 +755,7 @@
               <p class="case-status" id="records-line" hidden></p>
 
               <button class="ghost-btn" id="btn-reset">start a fresh run</button>
+              <button class="ghost-btn" id="btn-stats">case statistics</button>
               <button class="ghost-btn" id="btn-debug">debug: off</button>
             </div>
 
@@ -744,6 +775,53 @@ four guesses. Miss all four and the suspect walks.
                 </p>
                 <div class="desk-fill"></div>
                 <p class="desk-standing">Every person is a guessing target once per run. Correct guesses close the file; four misses send you back to the front page.</p>
+              </article>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= STATS ================= -->
+
+      <section class="home" id="screen-stats" hidden>
+        <div class="home-inner">
+          <header class="masthead">
+            <div class="dateline">
+              <span>The Local Chat Enquirer</span>
+              <span id="stats-date"></span>
+            </div>
+            <h1 class="logo" id="stats-logo"></h1>
+            <hr class="press-rule" />
+          </header>
+
+          <div class="home-body">
+            <div class="filing" id="filing-stats">
+              <div>
+                <span class="field-label">Case statistics</span>
+              </div>
+
+              <p class="case-status" id="stats-summary"></p>
+
+              <div class="stats-grid" id="stats-grid" hidden></div>
+
+              <button class="ghost-btn" id="btn-stats-back">← back to the front page</button>
+            </div>
+
+            <aside class="spotlight">
+              <article class="desk-card" style="--tilt: -.4deg">
+                <div class="desk-head">
+                  <span>Field note</span>
+                  <span>local · this run</span>
+                </div>
+                <h2 class="desk-name">The record so far</h2>
+                <p class="desk-body">
+                  <span class="desk-cap">E</span>
+very identified case adds to these totals. The longest streak is the
+most cases you closed back to back before a miss — it survives until
+you start a fresh run.
+                </p>
+                <div class="desk-fill"></div>
+                <p class="desk-standing">Stats reset when you start a fresh run.</p>
               </article>
             </aside>
           </div>
@@ -808,6 +886,7 @@ four guesses. Miss all four and the suspect walks.
         var STORAGE_KEY = "peri_whodunchat_used";
         var DEBUG_KEY = "peri_whodunchat_debug";
         var STREAK_KEY = "peri_whodunchat_streak";
+        var BEST_KEY = "peri_whodunchat_best";
         var RECORDS_KEY = "peri_whodunchat_records";
 
         var DATA = window.WHODUNCHAT_DATA || null;
@@ -846,6 +925,17 @@ four guesses. Miss all four and the suspect walks.
             sessionStorage.setItem(STREAK_KEY, String(n));
           } catch (e) {}
         }
+        function readBest() {
+          try {
+            var n = parseInt(sessionStorage.getItem(BEST_KEY), 10);
+            return isNaN(n) || n < 0 ? 0 : n;
+          } catch (e) { return 0; }
+        }
+        function writeBest(n) {
+          try {
+            sessionStorage.setItem(BEST_KEY, String(n));
+          } catch (e) {}
+        }
         function readRecords() {
           try {
             var obj = JSON.parse(sessionStorage.getItem(RECORDS_KEY) || "{}");
@@ -860,6 +950,7 @@ four guesses. Miss all four and the suspect walks.
         function clearRun() {
           clearUsed();
           try { sessionStorage.removeItem(STREAK_KEY); } catch (e) {}
+          try { sessionStorage.removeItem(BEST_KEY); } catch (e) {}
           try { sessionStorage.removeItem(RECORDS_KEY); } catch (e) {}
         }
 
@@ -979,11 +1070,10 @@ four guesses. Miss all four and the suspect walks.
 
         /* ---------- screen switching ---------- */
         function showScreen(name) {
-          var home = document.getElementById("screen-home");
-          var game = document.getElementById("screen-game");
-          var showGame = name === "game";
-          home.hidden = showGame;
-          game.hidden = !showGame;
+          var screens = { home: "screen-home", game: "screen-game", stats: "screen-stats" };
+          Object.keys(screens).forEach(function (key) {
+            document.getElementById(screens[key]).hidden = key !== name;
+          });
         }
 
         /* ---------- game state (Phase 2) ---------- */
@@ -1227,6 +1317,60 @@ four guesses. Miss all four and the suspect walks.
           writeRecords(records);
         }
 
+        function renderStats() {
+          var records = readRecords();
+          var ids = Object.keys(records);
+          var rounds = ids.length;
+          var wins = 0;
+          var losses = 0;
+          var guesses = 0;
+          ids.forEach(function (id) {
+            var r = records[id];
+            if (!r) return;
+            if (r.won) wins++;
+            else losses++;
+            if (typeof r.guesses === "number") guesses += r.guesses;
+          });
+          var success = rounds ? Math.round((wins / rounds) * 100) : 0;
+          var avg = rounds ? Math.round((guesses / rounds) * 10) / 10 : 0;
+
+          var summary = document.getElementById("stats-summary");
+          if (!rounds) {
+            summary.textContent = "No cases on record yet — play a round first.";
+          } else {
+            summary.innerHTML = wins + " identified, " + losses + " walked across " +
+              rounds + " cases so far.";
+          }
+
+          var grid = document.getElementById("stats-grid");
+          var tiles = [
+            { id: "stat-rounds", label: "cases", value: String(rounds) },
+            { id: "stat-wins", label: "identified", value: String(wins) },
+            { id: "stat-losses", label: "walked", value: String(losses) },
+            { id: "stat-success", label: "success rate", value: success + "%" },
+            { id: "stat-guesses", label: "total guesses", value: String(guesses) },
+            { id: "stat-avg", label: "guesses per case", value: String(avg) },
+            { id: "stat-best", label: "longest streak", value: String(readBest()) },
+            { id: "stat-current", label: "current streak", value: String(readStreak()) }
+          ];
+          grid.innerHTML = "";
+          tiles.forEach(function (t) {
+            var tile = document.createElement("div");
+            tile.className = "stat";
+            var label = document.createElement("span");
+            label.className = "stat-label";
+            label.textContent = t.label;
+            var value = document.createElement("strong");
+            value.className = "stat-value";
+            value.id = t.id;
+            value.textContent = t.value;
+            tile.appendChild(label);
+            tile.appendChild(value);
+            grid.appendChild(tile);
+          });
+          grid.hidden = false;
+        }
+
         /* ---------- guessing (Phase 2 Step 2) ---------- */
         function isRuledOut(name) {
           return round.misses.some(function (m) { return m.name === name; });
@@ -1366,7 +1510,9 @@ four guesses. Miss all four and the suspect walks.
         function winRound(name) {
           round.state = "won";
           document.getElementById("guess-input").value = name;
-          writeStreak(readStreak() + 1);
+          var streak = readStreak() + 1;
+          writeStreak(streak);
+          if (streak > readBest()) writeBest(streak);
           recordResult(round.person, true);
           renderHudStreak();
           renderHomeMeta();
@@ -1440,22 +1586,29 @@ four guesses. Miss all four and the suspect walks.
         }
 
         /* ---------- boot ---------- */
-        function init() {
-          var logo = document.getElementById("logo");
+        function buildLogo(id) {
+          var el = document.getElementById(id);
           var text = "whodunchat";
-          logo.innerHTML = "";
+          el.innerHTML = "";
           text.split("").forEach(function (ch, i) {
             var span = document.createElement("span");
             span.className = "logo-char";
             span.style.setProperty("--i", i);
             span.textContent = ch;
-            logo.appendChild(span);
+            el.appendChild(span);
           });
+        }
+
+        function init() {
+          buildLogo("logo");
+          buildLogo("stats-logo");
 
           var dateEl = document.getElementById("dateline-date");
           dateEl.textContent = new Intl.DateTimeFormat("en-GB", {
             day: "numeric", month: "short", year: "numeric", timeZone: "UTC"
           }).format(new Date());
+          var statsDateEl = document.getElementById("stats-date");
+          statsDateEl.textContent = dateEl.textContent;
 
           document.body.setAttribute("data-debug", DEBUG ? "1" : "0");
           document.getElementById("debug-bar").hidden = !DEBUG;
@@ -1525,6 +1678,13 @@ four guesses. Miss all four and the suspect walks.
           document.getElementById("btn-reset").addEventListener("click", function () {
             clearRun();
             renderProgress(pool.length);
+          });
+          document.getElementById("btn-stats").addEventListener("click", function () {
+            renderStats();
+            showScreen("stats");
+          });
+          document.getElementById("btn-stats-back").addEventListener("click", function () {
+            showScreen("home");
           });
           document.getElementById("btn-debug").textContent = "debug: " + (DEBUG ? "on" : "off");
           document.getElementById("btn-debug").addEventListener("click", function () {
