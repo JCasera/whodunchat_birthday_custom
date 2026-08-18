@@ -575,7 +575,13 @@
       }
       .round-status.is-hit { color: var(--hit); }
       .round-status.is-miss { color: var(--ember-hot); }
-      .round-actions { display: grid; justify-items: center; }
+      .round-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: .9rem;
+        flex-wrap: wrap;
+      }
       .round-actions[hidden] { display: none; }
 
       .no-clock {
@@ -748,6 +754,7 @@ four guesses. Miss all four and the suspect walks.
 
           <div class="round-actions" id="round-actions" hidden>
             <button class="play-btn" id="btn-next">next case</button>
+            <button class="ghost-btn" id="btn-home">back to the front page</button>
           </div>
 
           <p class="no-clock">untimed case</p>
@@ -1208,16 +1215,15 @@ four guesses. Miss all four and the suspect walks.
 
         function setupNext() {
           var last = run.index >= run.order.length - 1;
-          var lost = round.state === "lost";
           document.getElementById("btn-next").textContent =
-            (lost || last) ? "back to the front page" : "next case";
+            last ? "start a fresh run" : "next case";
           document.getElementById("round-actions").hidden = false;
         }
 
         function advanceRound() {
-          if (round.state === "lost" || run.index >= run.order.length - 1) {
-            showScreen("home");
-            renderProgress(pool.length);
+          if (run.index >= run.order.length - 1) {
+            clearUsed();
+            if (startGame()) renderRound();
             return;
           }
           run.index++;
@@ -1295,6 +1301,10 @@ four guesses. Miss all four and the suspect walks.
           document.getElementById("debug-next").addEventListener("click", debugNext);
           document.getElementById("btn-next").addEventListener("click", function () {
             if (round && round.state !== "active") advanceRound();
+          });
+          document.getElementById("btn-home").addEventListener("click", function () {
+            showScreen("home");
+            renderProgress(pool.length);
           });
           var guessInput = document.getElementById("guess-input");
           guessInput.addEventListener("input", function () {
