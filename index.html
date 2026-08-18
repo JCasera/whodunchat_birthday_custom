@@ -383,67 +383,100 @@
       }
       .exhibit-label span:last-child { color: var(--paper); }
 
-      .card-stage { position: relative; }
-      .message-card {
-        background: var(--news);
-        color: var(--news-ink);
-        animation: exhibit-in .46s var(--ease-strong) both;
-        padding: 1.5rem 1.6rem 1.7rem;
-        position: relative;
-        box-shadow: 6px 7px oklch(0% none none / .55);
-      }
-      @keyframes exhibit-in {
-        0% { opacity: 0; transform: translateY(-14px) rotate(-.85deg); }
-      }
-      .card-head {
-        border-bottom: 1px solid var(--news-shade);
-        align-items: center;
-        gap: .6rem;
-        margin-bottom: .9rem;
-        padding-bottom: .7rem;
-        display: flex;
-      }
-      .mystery-avatar {
-        background: var(--news-ink);
-        width: 2.3rem;
-        height: 2.3rem;
-        color: var(--news);
-        font-family: var(--font-head);
-        flex: none;
-        place-items: center;
-        font-size: 1.45rem;
-        font-weight: 900;
+      .wanted-list {
+        gap: .9rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
         display: grid;
       }
-      .mystery-name {
+      .wanted-item {
+        background: var(--news);
+        color: var(--news-ink);
+        animation: statement-in .46s var(--ease-strong) both;
+        animation-delay: calc(var(--i, 0) * 55ms);
+        gap: .7rem;
+        padding: 1.1rem 1.25rem 1.25rem;
+        display: grid;
+        box-shadow: 5px 6px oklch(0% none none / .55);
+      }
+      @keyframes statement-in {
+        0% { opacity: 0; gap: 0; padding-top: .5rem; padding-bottom: .5rem; }
+        60% { opacity: 1; }
+      }
+      .wanted-reveal {
+        animation: unfold .46s var(--ease-strong) both;
+        grid-template-rows: 1fr;
+        display: grid;
+        overflow: hidden;
+      }
+      .wanted-reveal > * { min-height: 0; }
+      @keyframes unfold {
+        0% { opacity: 0; grid-template-rows: 0fr; }
+        60% { opacity: 1; }
+        to { opacity: 1; grid-template-rows: 1fr; }
+      }
+      .wanted-item-head {
+        border-bottom: 1px solid var(--news-shade);
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .75rem;
+        padding-bottom: .55rem;
+        display: flex;
+      }
+      .wanted-item.is-sealed {
+        color: var(--paper-dim);
+        border: 1px dashed var(--rule);
+        box-shadow: none;
+        background: 0 0;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        padding: .5rem .9rem;
+        animation: none;
+        display: flex;
+      }
+      .wanted-item.is-sealed .wanted-no { font-size: var(--fs-meta); opacity: .75; }
+      .wanted-no {
         font-family: var(--font-head);
         font-size: var(--fs-kicker);
-        letter-spacing: .06em;
+        letter-spacing: .08em;
         text-transform: uppercase;
-        color: var(--news-ink);
-        flex: 1;
         font-weight: 800;
       }
-      .card-stamp {
+      .wanted-date {
         font-family: var(--font-file);
         font-size: var(--fs-micro);
-        letter-spacing: .04em;
-        color: var(--news-ink-dim);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        opacity: .7;
+        white-space: nowrap;
       }
-      .message-text {
+      .wanted-text {
         font-family: var(--font-text);
-        font-size: clamp(1.75rem, 6vw, 2.1rem);
-        letter-spacing: -.005em;
-        word-break: break-word;
         overflow-wrap: anywhere;
         text-wrap: pretty;
         margin: 0;
-        font-weight: 500;
-        line-height: 1.38;
-      }
-      .message-text.is-long {
-        font-size: clamp(1.25rem, 4.4vw, 1.45rem);
+        font-size: clamp(1.2rem, 3.2vw, 1.55rem);
         line-height: 1.45;
+      }
+      .wanted-sealed {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        opacity: .6;
+        white-space: nowrap;
+        margin: 0;
+      }
+      .wanted-paid {
+        border-top: 1px solid color-mix(in oklch, var(--news-ink) 22%, transparent);
+        font-family: var(--font-file);
+        font-size: var(--fs-meta);
+        margin-top: .7rem;
+        padding-top: .6rem;
+        display: grid;
+        gap: .35rem;
       }
 
       .no-clock {
@@ -503,10 +536,10 @@
       body[data-debug="1"] .hud { padding-top: calc(.6rem + 2.6rem); }
 
       @media (width<=620px) {
-        .message-card { padding: 1.25rem 1.15rem 1.4rem; box-shadow: 4px 5px oklch(0% none none / .55); }
+        .wanted-item { padding: 1rem 1.05rem 1.15rem; box-shadow: 4px 5px oklch(0% none none / .55); }
         .exhibit-label { flex-direction: column; align-items: flex-start; gap: .15rem; }
-        .card-head { flex-wrap: wrap; row-gap: .35rem; }
-        .card-stamp { flex-basis: 100%; }
+        .wanted-item-head { flex-wrap: wrap; row-gap: .35rem; }
+        .wanted-date { flex-basis: 100%; }
       }
       @media (prefers-reduced-motion: reduce) {
         *, :before, :after {
@@ -593,19 +626,10 @@
         <main class="game-main">
           <div class="exhibit-label">
             <span>Who said it?</span>
-            <span>Statement on record</span>
+            <span>Statements on record</span>
           </div>
 
-          <div class="card-stage">
-            <article class="message-card">
-              <div class="card-head">
-                <div class="mystery-avatar">?</div>
-                <span class="mystery-name">Statement on record</span>
-                <span class="card-stamp" id="card-date"></span>
-              </div>
-              <p class="message-text" id="message-text"></p>
-            </article>
-          </div>
+          <ol class="wanted-list" id="statement-list"></ol>
 
           <p class="no-clock">untimed case</p>
         </main>
@@ -807,6 +831,15 @@
           };
         }
 
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function pad(n) {
+          return n < 10 ? "0" + n : String(n);
+        }
+
         function renderRound() {
           var stmts = round.statements;
           var idx = round.revealIndex;
@@ -816,14 +849,29 @@
           document.getElementById("case-no").textContent =
             "Statement " + (idx + 1) + " of " + total;
 
-          var textEl = document.getElementById("message-text");
-          textEl.textContent = stmts[idx];
-          textEl.classList.toggle("is-long", stmts[idx].length > 100);
+          var date = new Intl.DateTimeFormat("en-GB", {
+            day: "numeric", month: "short", year: "numeric", timeZone: "UTC"
+          }).format(new Date()) + " UTC";
 
-          document.getElementById("card-date").textContent =
-            new Intl.DateTimeFormat("en-GB", {
-              day: "numeric", month: "short", year: "numeric", timeZone: "UTC"
-            }).format(new Date()) + " UTC";
+          var html = "";
+          stmts.forEach(function (text, i) {
+            if (i <= idx) {
+              html += '<li class="wanted-item" style="--i:' + i + '">' +
+                '<div class="wanted-reveal">' +
+                '<div class="wanted-item-head">' +
+                '<span class="wanted-no">Statement ' + pad(i + 1) + '</span>' +
+                '<span class="wanted-date">' + date + '</span>' +
+                '</div>' +
+                '<p class="wanted-text">' + esc(text) + '</p>' +
+                '</div></li>';
+            } else {
+              html += '<li class="wanted-item is-sealed">' +
+                '<span class="wanted-no">Statement ' + pad(i + 1) + '</span>' +
+                '<p class="wanted-sealed">sealed</p>' +
+                '</li>';
+            }
+          });
+          document.getElementById("statement-list").innerHTML = html;
 
           if (DEBUG) {
             document.getElementById("debug-answer").textContent = round.person.name;
@@ -890,7 +938,10 @@
           renderProgress(pool.length);
 
           document.getElementById("btn-start").addEventListener("click", function () {
-            if (startGame()) showScreen("game");
+            if (startGame()) {
+              renderProgress(pool.length);
+              showScreen("game");
+            }
           });
           document.getElementById("btn-drop").addEventListener("click", function () {
             showScreen("home");
