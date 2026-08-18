@@ -786,7 +786,7 @@ Get it wrong and another message turns up — four messages,
 four guesses. Miss all four and the suspect walks.
                 </p>
                 <div class="desk-fill"></div>
-                <p class="desk-standing">Every person is a guessing target once per run. Correct guesses close the file; four misses send you back to the front page.</p>
+                <p class="desk-standing">Every person on the record is a guessing target once per run. Dropping a case puts them back in the pool — correct guesses close the file; four misses send you back to the front page.</p>
               </article>
             </aside>
           </div>
@@ -833,7 +833,7 @@ most cases you closed back to back before a miss — it survives until
 you start a fresh run.
                 </p>
                 <div class="desk-fill"></div>
-                <p class="desk-standing">Stats reset when you start a fresh run.</p>
+                <p class="desk-standing">Stats stay on the record until you close the tab.</p>
               </article>
             </aside>
           </div>
@@ -931,7 +931,7 @@ you start a fresh run.
                 you start a fresh run.
                 </p>
                 <div class="desk-fill"></div>
-                <p class="desk-standing">Videos play from Google Drive — no sign-in needed.</p>
+                <p class="desk-standing">Videos play from Google Drive — no sign-in needed. Stats persist until you close the tab.</p>
               </article>
             </aside>
           </div>
@@ -1009,9 +1009,6 @@ you start a fresh run.
         }
         function clearRun() {
           clearUsed();
-          try { sessionStorage.removeItem(STREAK_KEY); } catch (e) {}
-          try { sessionStorage.removeItem(BEST_KEY); } catch (e) {}
-          try { sessionStorage.removeItem(RECORDS_KEY); } catch (e) {}
         }
 
         /* ---------- validation ---------- */
@@ -1172,6 +1169,15 @@ you start a fresh run.
           var used = readUsed();
           if (used.indexOf(id) === -1) {
             used.push(id);
+            writeUsed(used);
+          }
+          return used;
+        }
+        function unmarkUsed(id) {
+          var used = readUsed();
+          var i = used.indexOf(id);
+          if (i !== -1) {
+            used.splice(i, 1);
             writeUsed(used);
           }
           return used;
@@ -1793,6 +1799,7 @@ you start a fresh run.
             }
           });
           document.getElementById("btn-drop").addEventListener("click", function () {
+            if (round && round.person) unmarkUsed(round.person.id);
             showScreen("home");
             renderProgress(pool.length);
           });

@@ -58,7 +58,7 @@ Decoys may carry the same hint stats as roster people (`followedAt`, `subMonths`
 
 ## How the game works
 
-- A random roster person becomes the target (each person is a target at most **once per launch**).
+- A random roster person becomes the target (each person is a target at most **once per run**; **drop case** puts the current person back in the pool and the next open randomizes a new target).
 - Their first random statement is shown; type a name to guess who said it (autocomplete + the 3 closest-name quick picks help avoid typos).
 - Correct → move to the next person.
 - Wrong → another statement is revealed plus hints comparing the target to your guess:
@@ -71,8 +71,9 @@ Decoys may carry the same hint stats as roster people (`followedAt`, `subMonths`
 
 ## Progress & reset
 
-- Used targets are stored in `sessionStorage` — they survive a page refresh but are cleared when you close the tab (that's a new launch).
-- Use **"start a fresh run"** on the home page to reset immediately.
+- Targets are stored in `sessionStorage` — they survive a page refresh but are cleared when you close the tab.
+- **Stats (streak, longest streak, records, totals) persist for the whole session** and only reset when you close the tab.
+- **"start a fresh run"** on the home page reopens the target pool but keeps your stats.
 
 ## Phases
 
