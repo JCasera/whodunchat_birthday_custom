@@ -45,6 +45,7 @@
         --fs-body: 1.09rem;
         --fs-kicker: 1.3rem;
         --tap: 44px;
+        --timer-h: 10px;
         --track-label: .11em;
         --ease: cubic-bezier(.22, 1, .36, 1);
         --ease-strong: cubic-bezier(.16, 1, .3, 1);
@@ -59,6 +60,7 @@
           --fs-body: 1rem;
           --fs-kicker: 1.2rem;
           --tap: 0px;
+          --timer-h: 6px;
         }
       }
 
@@ -317,16 +319,6 @@
         line-height: 1.65;
       }
 
-      .colophon { margin-top: 2.5rem; }
-      .colophon-line {
-        font-family: var(--font-file);
-        font-size: var(--fs-micro);
-        color: var(--paper-dim);
-        margin: 0;
-        line-height: 1.7;
-      }
-      .colophon-line + .colophon-line { margin-top: .35rem; }
-
       .game { flex-direction: column; min-height: 100vh; display: flex; }
       .game-main {
         flex-direction: column;
@@ -338,38 +330,200 @@
         padding: clamp(1rem, 4vw, 2rem) clamp(.9rem, 3vw, 1.5rem) 2.5rem;
         display: flex;
       }
-      .stub-card {
+
+      .hud {
+        border-bottom: 3px solid var(--paper);
+        gap: .55rem;
+        padding: .6rem clamp(.75rem, 3vw, 1.5rem) .75rem;
+        display: grid;
+      }
+      .hud-top {
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        display: flex;
+      }
+      .hud-left, .hud-right { align-items: center; gap: .5rem; min-width: 0; display: flex; }
+      .hud-bar {
+        justify-content: center;
+        display: flex;
+      }
+      .hud-channel {
+        font-family: var(--font-file);
+        font-size: var(--fs-meta);
+        letter-spacing: .06em;
+        color: var(--paper);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      .case-no {
+        font-family: var(--font-head);
+        font-size: clamp(1.2rem, 4.2vw, 1.95rem);
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--paper);
+        white-space: nowrap;
+        font-weight: 800;
+      }
+
+      .exhibit-label {
+        font-weight: 400;
+        font-family: var(--font-file);
+        font-size: var(--fs-meta);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--paper-dim);
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        margin: 0;
+        display: flex;
+      }
+      .exhibit-label span:last-child { color: var(--paper); }
+
+      .card-stage { position: relative; }
+      .message-card {
         background: var(--news);
         color: var(--news-ink);
         animation: exhibit-in .46s var(--ease-strong) both;
         padding: 1.5rem 1.6rem 1.7rem;
+        position: relative;
         box-shadow: 6px 7px oklch(0% none none / .55);
       }
       @keyframes exhibit-in {
         0% { opacity: 0; transform: translateY(-14px) rotate(-.85deg); }
       }
-      .stub-title {
+      .card-head {
+        border-bottom: 1px solid var(--news-shade);
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .9rem;
+        padding-bottom: .7rem;
+        display: flex;
+      }
+      .mystery-avatar {
+        background: var(--news-ink);
+        width: 2.3rem;
+        height: 2.3rem;
+        color: var(--news);
         font-family: var(--font-head);
-        text-transform: uppercase;
-        color: var(--stamp);
-        margin: 0 0 .35rem;
-        font-size: clamp(2rem, 8vw, 3rem);
+        flex: none;
+        place-items: center;
+        font-size: 1.45rem;
         font-weight: 900;
-        line-height: .9;
+        display: grid;
       }
-      .stub-body {
-        font-family: var(--font-text);
-        font-size: var(--fs-body);
+      .mystery-name {
+        font-family: var(--font-head);
+        font-size: var(--fs-kicker);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--news-ink);
+        flex: 1;
+        font-weight: 800;
+      }
+      .card-stamp {
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .04em;
         color: var(--news-ink-dim);
-        margin: 0 0 .4rem;
-        line-height: 1.55;
       }
-      .stub-actions { margin-top: 1rem; }
-    </style>
+      .message-text {
+        font-family: var(--font-text);
+        font-size: clamp(1.75rem, 6vw, 2.1rem);
+        letter-spacing: -.005em;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        text-wrap: pretty;
+        margin: 0;
+        font-weight: 500;
+        line-height: 1.38;
+      }
+      .message-text.is-long {
+        font-size: clamp(1.25rem, 4.4vw, 1.45rem);
+        line-height: 1.45;
+      }
+
+      .no-clock {
+        height: var(--timer-h);
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .24em;
+        text-transform: uppercase;
+        color: var(--paper-dim);
+        align-items: center;
+        gap: .6rem;
+        display: flex;
+      }
+      .no-clock:before, .no-clock:after {
+        content: "";
+        background: var(--rule);
+        flex: 1;
+        height: 1px;
+      }
+
+      .debug-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        align-items: center;
+        gap: .6rem;
+        padding: .5rem .8rem;
+        background: color-mix(in oklch, var(--stamp) 30%, var(--ground));
+        border-bottom: 1px solid var(--stamp-bright);
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--paper);
+        display: flex;
+      }
+      .debug-bar[hidden] { display: none; }
+      .debug-answer { margin-right: auto; }
+      .debug-answer strong { color: var(--ember-hot); }
+      .debug-stmt { color: var(--paper-dim); }
+      .debug-btn {
+        border: 1px solid var(--stamp-bright);
+        background: var(--stamp);
+        color: var(--paper);
+        font-family: var(--font-file);
+        font-size: var(--fs-micro);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        padding: .35rem .7rem;
+      }
+      .debug-btn:hover:not(:disabled) { background: var(--stamp-bright); }
+      .debug-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+      body[data-debug="1"] .home { padding-top: calc(clamp(1.25rem, 4vw, 2.75rem) + 2.6rem); }
+      body[data-debug="1"] .hud { padding-top: calc(.6rem + 2.6rem); }
+
+      @media (width<=620px) {
+        .message-card { padding: 1.25rem 1.15rem 1.4rem; box-shadow: 4px 5px oklch(0% none none / .55); }
+        .exhibit-label { flex-direction: column; align-items: flex-start; gap: .15rem; }
+        .card-head { flex-wrap: wrap; row-gap: .35rem; }
+        .card-stamp { flex-basis: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, :before, :after {
+          transition-duration: .01ms !important;
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
   </head>
   <body>
     <div class="app" id="app">
       <div class="bg-layer"></div>
+
+      <div class="debug-bar" id="debug-bar" hidden>
+        <span class="debug-answer">DEBUG · answer: <strong id="debug-answer">—</strong></span>
+        <span class="debug-stmt" id="debug-stmt"></span>
+        <button class="debug-btn" id="debug-next">reveal next statement</button>
+      </div>
 
       <!-- ================= HOME ================= -->
       <section class="home" id="screen-home">
@@ -414,25 +568,44 @@
               </article>
             </aside>
           </div>
-
-          <footer class="colophon">
-            <p class="colophon-line">A local homage to whodunchat by DuckSaint — powered by a fixed set of people and messages in <strong style="color: var(--paper); font-weight: 600;">data.js</strong>.</p>
-            <p class="colophon-line" id="pool-line"></p>
-          </footer>
         </div>
       </section>
 
-      <!-- ================= GAME (stub for Phase 1) ================= -->
+      <!-- ================= GAME ================= -->
       <section class="game" id="screen-game" hidden>
-        <div class="game-main">
-          <article class="stub-card">
-            <h2 class="stub-title">The case room opens in Phase 2</h2>
-            <p class="stub-body" id="stub-line"></p>
-            <div class="stub-actions">
-              <button class="secondary-btn" id="btn-back">← back to the front page</button>
+        <header class="hud">
+          <div class="hud-top">
+            <div class="hud-left">
+              <button class="ghost-btn" id="btn-drop">← drop case</button>
             </div>
-          </article>
-        </div>
+            <div class="hud-right">
+              <span class="hud-channel" id="hud-channel"></span>
+            </div>
+          </div>
+          <div class="hud-bar">
+            <span class="case-no" id="case-no">Statement 1 of 4</span>
+          </div>
+        </header>
+
+        <main class="game-main">
+          <div class="exhibit-label">
+            <span>Who said it?</span>
+            <span>Statement on record</span>
+          </div>
+
+          <div class="card-stage">
+            <article class="message-card">
+              <div class="card-head">
+                <div class="mystery-avatar">?</div>
+                <span class="mystery-name">Statement on record</span>
+                <span class="card-stamp" id="card-date"></span>
+              </div>
+              <p class="message-text" id="message-text"></p>
+            </article>
+          </div>
+
+          <p class="no-clock">untimed case</p>
+        </main>
       </section>
     </div>
 
@@ -559,8 +732,10 @@
           }
           if (remaining <= 0) {
             el.innerHTML = "Every person on the record is <strong>solved</strong>. Start a fresh run to clear it.";
+            document.getElementById("btn-start").disabled = true;
             return;
           }
+          document.getElementById("btn-start").disabled = false;
           el.innerHTML = "<strong>" + remaining + " of " + roster.length +
             "</strong> people still on the record" +
             (used.length ? " (" + used.length + " already closed this launch)" : "") +
@@ -574,6 +749,88 @@
           var showGame = name === "game";
           home.hidden = showGame;
           game.hidden = !showGame;
+        }
+
+        /* ---------- game state (Phase 2) ---------- */
+        var DEBUG = /[?&]debug=1/.test(location.search);
+        var run = null;
+        var round = null;
+
+        function shuffle(list) {
+          var a = list.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = a[i];
+            a[i] = a[j];
+            a[j] = t;
+          }
+          return a;
+        }
+
+        function drawStatements(person) {
+          var pool = (person.statements || []).slice();
+          return shuffle(pool).slice(0, Math.min(4, pool.length));
+        }
+
+        function markUsed(id) {
+          var used = readUsed();
+          if (used.indexOf(id) === -1) {
+            used.push(id);
+            writeUsed(used);
+          }
+          return used;
+        }
+
+        function startGame() {
+          var used = readUsed();
+          var unused = roster.filter(function (p) { return used.indexOf(p.id) === -1; });
+          if (!unused.length) return false;
+          run = { order: shuffle(unused), index: 0 };
+          round = startRound(run.order[0]);
+          renderRound();
+          return true;
+        }
+
+        function startRound(person) {
+          markUsed(person.id);
+          return {
+            person: person,
+            statements: drawStatements(person),
+            revealIndex: 0
+          };
+        }
+
+        function renderRound() {
+          var stmts = round.statements;
+          var idx = round.revealIndex;
+          var total = stmts.length;
+
+          document.getElementById("hud-channel").textContent = "#" + channel;
+          document.getElementById("case-no").textContent =
+            "Statement " + (idx + 1) + " of " + total;
+
+          var textEl = document.getElementById("message-text");
+          textEl.textContent = stmts[idx];
+          textEl.classList.toggle("is-long", stmts[idx].length > 100);
+
+          document.getElementById("card-date").textContent =
+            new Intl.DateTimeFormat("en-GB", {
+              day: "numeric", month: "short", year: "numeric", timeZone: "UTC"
+            }).format(new Date()) + " UTC";
+
+          if (DEBUG) {
+            document.getElementById("debug-answer").textContent = round.person.name;
+            document.getElementById("debug-stmt").textContent = (idx + 1) + "/" + total;
+            document.getElementById("debug-next").disabled = idx >= total - 1;
+          }
+        }
+
+        function debugNext() {
+          if (!round) return;
+          if (round.revealIndex < round.statements.length - 1) {
+            round.revealIndex++;
+            renderRound();
+          }
         }
 
         /* ---------- boot ---------- */
@@ -594,6 +851,9 @@
             day: "numeric", month: "short", year: "numeric", timeZone: "UTC"
           }).format(new Date());
 
+          document.body.setAttribute("data-debug", DEBUG ? "1" : "0");
+          document.getElementById("debug-bar").hidden = !DEBUG;
+
           var problems = validate();
           var pool = buildGuessPool();
 
@@ -601,6 +861,7 @@
           console.log("[whodunchat] roster people: " + roster.length);
           console.log("[whodunchat] guess pool (" + pool.length + "): " +
             pool.map(function (p) { return p.name; }).join(", "));
+          if (DEBUG) console.log("[whodunchat] debug mode on.");
           if (problems.length) {
             console.warn("[whodunchat] validation found " + problems.length + " problem(s).");
           } else {
@@ -619,21 +880,15 @@
             document.getElementById("filing").prepend(notice);
           }
 
-          document.getElementById("pool-line").textContent =
-            "Guess pool built from guess-options.js + data.js · " + pool.length +
-            " names (" + (pool.length - roster.length) + " decoys).";
-
           renderProgress(pool.length);
 
           document.getElementById("btn-start").addEventListener("click", function () {
-            document.getElementById("stub-line").textContent =
-              "The guessing game lands here in Phase 2. " + roster.length +
-              " people and " + pool.length + " names are wired and waiting.";
-            showScreen("game");
+            if (startGame()) showScreen("game");
           });
-          document.getElementById("btn-back").addEventListener("click", function () {
+          document.getElementById("btn-drop").addEventListener("click", function () {
             showScreen("home");
           });
+          document.getElementById("debug-next").addEventListener("click", debugNext);
           document.getElementById("btn-reset").addEventListener("click", function () {
             clearUsed();
             renderProgress(pool.length);
