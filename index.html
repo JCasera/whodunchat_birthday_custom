@@ -1616,7 +1616,7 @@ you start a fresh run.
               document.getElementById("guess-input").value = p.name;
               document.getElementById("guess-hint").hidden = true;
               document.getElementById("guess-suggest").hidden = true;
-              document.getElementById("guess-closest").hidden = true;
+              renderClosest();
             });
             el.appendChild(btn);
           });
