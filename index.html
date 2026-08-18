@@ -1705,9 +1705,12 @@ you start a fresh run.
         function scrollToGuess() {
           try {
             var guess = document.querySelectorAll("#guess")[0];
-            if (guess && typeof guess.scrollIntoView === "function") {
+            if (!guess || typeof guess.scrollIntoView !== "function") return;
+            var doScroll = function () {
               guess.scrollIntoView({ block: "end", behavior: "smooth" });
-            }
+            };
+            if (typeof setTimeout === "function") setTimeout(doScroll, 650);
+            else doScroll();
           } catch (e) {}
         }
 
