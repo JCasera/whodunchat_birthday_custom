@@ -549,6 +549,7 @@
               <p class="case-status" id="case-status"></p>
 
               <button class="ghost-btn" id="btn-reset">start a fresh run</button>
+              <button class="ghost-btn" id="btn-debug">debug: off</button>
             </div>
 
             <aside class="spotlight">
@@ -616,6 +617,7 @@
         "use strict";
 
         var STORAGE_KEY = "peri_whodunchat_used";
+        var DEBUG_KEY = "peri_whodunchat_debug";
 
         var DATA = window.WHODUNCHAT_DATA || null;
         var OPTIONS = window.WHODUNCHAT_OPTIONS || [];
@@ -755,6 +757,9 @@
 
         /* ---------- game state (Phase 2) ---------- */
         var DEBUG = /[?&]debug=1/.test(location.search);
+        try {
+          if (localStorage.getItem(DEBUG_KEY) === "1") DEBUG = true;
+        } catch (e) {}
         var run = null;
         var round = null;
 
@@ -894,6 +899,14 @@
           document.getElementById("btn-reset").addEventListener("click", function () {
             clearUsed();
             renderProgress(pool.length);
+          });
+          document.getElementById("btn-debug").textContent = "debug: " + (DEBUG ? "on" : "off");
+          document.getElementById("btn-debug").addEventListener("click", function () {
+            try {
+              if (DEBUG) localStorage.removeItem(DEBUG_KEY);
+              else localStorage.setItem(DEBUG_KEY, "1");
+            } catch (e) {}
+            location.reload();
           });
         }
 
