@@ -22,8 +22,8 @@ window.WHODUNCHAT_DATA = {
         "alright who else is staying for the whole thing",
         "the vod will save this right? right?"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "quiet-grace",
