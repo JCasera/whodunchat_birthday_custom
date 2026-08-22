@@ -147,12 +147,14 @@ def main():
     lines.append('      name: "perindigo",')
     lines.append("      followedAt: null, // broadcaster; backfill later")
     lines.append("      subMonths: null, // broadcaster; backfill later")
-    lines.append("      messages: " + str(len(clean)) + ", // filtered statement count")
+    lines.append("      messages: " + str(len(sel)) + ", // selected statement count")
     lines.append("      statements: [")
     for t in sel:
         esc = t.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", " ")
         lines.append('        "' + esc + '",')
-    lines.append("      ]")
+    lines.append("      ],")
+    lines.append('      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",')
+    lines.append('      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"')
     lines.append("    },")
     print("\n".join(lines))
 
