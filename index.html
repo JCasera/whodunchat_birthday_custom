@@ -1246,10 +1246,10 @@ you start a fresh run.
           return false;
         }
 
-        // Pick the 4 statements (clues) for a round. Constraints:
-        //  - clue 1 & clue 2: emotes allowed, but only perindigo's (perin*)
-        //  - clue 3: emotes allowed, but never the person's own
-        //  - clue 4: any emotes, including the person's own
+        // Pick the 6 statements (clues) for a round. Mapping:
+        //  - clues 1 & 2: original clue-1/2 rules (perin-only emotes C, else plain D)
+        //  - clues 3 & 4: original clue-3 rules (other channels' emotes B, else C, else D)
+        //  - clues 5 & 6: original clue-4 rules (person's own emote A, else anything)
         // Perindigo's emotes are generic, so they never reveal the answer.
         function drawStatements(person) {
           var stmts = (person.statements || []).slice();
@@ -1281,14 +1281,16 @@ you start a fresh run.
             return null;
           }
 
-          // clues 1 & 2: prefer perin-only emotes (C), else plain (D)
+          // clues 1 & 2: original clue-1/2 rules (perin-only emotes C, else plain D)
           var c1 = take(C) || take(D) || anyUnused();
           var c2 = take(C) || take(D) || anyUnused();
-          // clue 3: prefer other channels' emotes (B), else perin (C), else plain (D)
+          // clues 3 & 4: original clue-3 rules (other channels' emotes B, else C, else D)
           var c3 = take(B) || take(C) || take(D) || anyUnused();
-          // clue 4: prefer the person's own emote (A), else anything
-          var c4 = take(A) || take(B) || take(C) || take(D) || anyUnused();
-          return [c1, c2, c3, c4].map(function (x) { return x == null ? "" : x; });
+          var c4 = take(B) || take(C) || take(D) || anyUnused();
+          // clues 5 & 6: original clue-4 rules (person's own emote A, else anything)
+          var c5 = take(A) || take(B) || take(C) || take(D) || anyUnused();
+          var c6 = take(A) || take(B) || take(C) || take(D) || anyUnused();
+          return [c1, c2, c3, c4, c5, c6].map(function (x) { return x == null ? "" : x; });
         }
 
         function markUsed(id) {
@@ -1785,11 +1787,9 @@ you start a fresh run.
           var hint = document.getElementById("guess-hint");
           document.getElementById("guess-suggest").hidden = true;
           if (!q || round.state !== "active") return;
-          var exact = pool.filter(function (p) {
-            return !isRuledOut(p.name) && p.name.toLowerCase() === q.toLowerCase();
-          })[0];
-          if (exact) {
-            guess(exact.name);
+          var matches = rankedMatches(q, SUGGEST_CAP);
+          if (matches.length && matches[0].toLowerCase().indexOf(q.toLowerCase()) !== -1) {
+            guess(matches[0]);
           } else {
             hint.textContent = "No exact match — pick from the suggestions.";
             hint.className = "guess-hint";
