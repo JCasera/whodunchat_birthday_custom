@@ -1301,7 +1301,7 @@ you start a fresh run.
           var B = stmts.filter(function (s) { return isNonPerin(s) && !isPerson(s); });
           var C = stmts.filter(function (s) { return !isNonPerin(s) && hasEmote(s); });
           var D = stmts.filter(function (s) { return !hasEmote(s); });
-          shuffle(A); shuffle(B); shuffle(C); shuffle(D);
+          A = shuffle(A); B = shuffle(B); C = shuffle(C); D = shuffle(D);
 
           var used = {};
           function take(list) {
@@ -1327,7 +1327,7 @@ you start a fresh run.
           // (5-6); other emotes (B/C) fit anywhere. Unplaceable emotes are
           // ignored (no minimum) so rounds stay random.
           for (var e = 0; e < emoteCount; e++) {
-            var pools = [A, B, C]; shuffle(pools);
+            var pools = shuffle([A, B, C]);
             var emote = null;
             for (var k = 0; k < pools.length; k++) { emote = take(pools[k]); if (emote) break; }
             if (!emote) break;

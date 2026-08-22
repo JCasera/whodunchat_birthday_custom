@@ -1,1 +1,5 @@
 .DS_Store
+
+# Randomization test harness + generated report (not part of the app)
+run_randomization_test.py
+randomization_report.md
