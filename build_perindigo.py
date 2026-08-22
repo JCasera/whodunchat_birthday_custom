@@ -30,6 +30,8 @@ import re
 import sys
 import random
 
+import filters
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "cache")
 TARGET = 1500
@@ -39,23 +41,7 @@ SEED = 42
 PERIN_EMOTE = re.compile(r"\bperin[A-Za-z0-9]+\b")
 URL_RE = re.compile(r"https?://|www\.", re.I)
 
-# Automated / template patterns posted under perindigo's name (chat bot game,
-# gacha, ad-breaks, raid/host welcomes). These are not genuine chatter.
-TEMPLATE_RE = re.compile(
-    r"(has been summoned into"
-    r"|is currently a level"
-    r"|you have rolled:"
-    r"|rarity"
-    r"|perishin indmpact"
-    r"|congrats .*! you have"
-    r"|ad warriors"
-    r"|pause the fight"
-    r"|back after ad"
-    r"|thank u so much for raid"
-    r"|welcome in"
-    r"|send some love over to)",
-    re.I,
-)
+# Template / bot / system filtering is shared in filters.py (filters.is_template).
 
 OBVIOUS_KEYWORDS = re.compile(
     r"(adge|raid|fusion|peri|refill|welcome|break|stream|"
@@ -73,15 +59,7 @@ def is_perindigo(msg):
 
 
 def is_template(text):
-    if not text or not text.strip():
-        return True
-    if URL_RE.search(text):
-        return True
-    if text.lstrip().startswith("!"):
-        return True
-    if TEMPLATE_RE.search(text):
-        return True
-    return False
+    return filters.is_template(text)
 
 
 def is_obvious(text):
@@ -122,6 +100,9 @@ def main():
         clean.append(t.strip())
 
     log("[build] after template-filter + dedupe: %d" % len(clean))
+
+    clean, _short_dups = filters.near_dedupe(clean)
+    log("[build] after near-dedupe: %d" % len(clean))
 
     obvious = [t for t in clean if is_obvious(t)]
     hard = [t for t in clean if not is_obvious(t)]

@@ -1,5 +1,7 @@
 import json, glob, os, re
 
+import filters
+
 HANDLES = [
     ("raechuu", "Raechuu"),
     ("chrysaliacsilla", "ChrysaliaCsilla"),
@@ -18,26 +20,14 @@ NAME = {h: n for h, n in HANDLES}
 VIDEO_WIN = "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing"
 VIDEO_LOSE = "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
 
-SYSTEM_PREFIXES = ("!",)
-SYSTEM_SUBSTR = (
-    "subscribed with", "raided", "has gifted", "is gifting",
-    "just subscribed", "prime sub", "now hosting", "hosted by",
-)
-
 def keep(text):
     t = text.strip()
     if not t:
         return False
-    if t[0] in SYSTEM_PREFIXES:
-        return False
-    low = t.lower()
-    if "http://" in low or "https://" in low or "www." in low:
-        return False
     if len(t) > 300:
         return False
-    for p in SYSTEM_SUBSTR:
-        if p in low:
-            return False
+    if filters.is_template(t):
+        return False
     return True
 
 # Pass 1: collect the set of user-ids that belong to each handle.
@@ -52,7 +42,7 @@ for f in files:
                 uid_sets[h].add(uid)
                 break
 
-# Pass 2: gather each person's messages by user-id, filter + dedupe.
+# Pass 2: gather each person's messages by user-id, filter + exact dedupe.
 msgs = {h: [] for h, _ in HANDLES}
 seen = {h: set() for h, _ in HANDLES}
 for f in files:
@@ -65,6 +55,10 @@ for f in files:
                     seen[h].add(text)
                     msgs[h].append(text)
                 break
+
+# Pass 3: per-person near-duplicate (templated) removal, keep-one per cluster.
+for h, _ in HANDLES:
+    msgs[h], _short_dups = filters.near_dedupe(msgs[h])
 
 def js_str(s):
     return json.dumps(s, ensure_ascii=False)
