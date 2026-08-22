@@ -19,6 +19,7 @@
 
     <script src="data.js"></script>
     <script src="guess-options.js"></script>
+    <script src="emotes.js"></script>
 
     <style>
       :root {
@@ -531,6 +532,15 @@
         margin: 0;
         font-size: clamp(1.2rem, 3.2vw, 1.55rem);
         line-height: 1.45;
+      }
+      .wanted-text .emote {
+        display: inline-block;
+        height: 1.45em;
+        max-height: 1.6em;
+        width: auto;
+        vertical-align: middle;
+        margin: -0.2em 0.12em;
+        border-radius: 4px;
       }
       .wanted-sealed {
         font-family: var(--font-file);
@@ -1179,9 +1189,105 @@ you start a fresh run.
           return a;
         }
 
+        // person.id (lowercased) -> that person's Twitch emote handle prefix.
+        // Used so a clue never reveals the answer via the person's own emote
+        // until the final clue.
+        var PERSON_EMOTE_PREFIX = {
+          "raechuu": "raechuu", "chrysaliacsilla": "chrysa15", "pocketchalk": "pocketchal",
+          "laavispa": "laavis", "yura": "yuravt", "purrodie": "purro", "eikkop": "eikko",
+          "jackiemeyers": "jackie234", "spellydoesart": "spelly1", "dearninette": "dear"
+        };
+
+        // Cached word-boundary regex of all known emote names. Built lazily and
+        // shared by renderMessage (images) and the clue-selection classifier.
+        var _EMOTE_RE = null;
+        function emoteRegex() {
+          if (_EMOTE_RE) return _EMOTE_RE;
+          var map = window.WHODUNCHAT_EMOTES || {};
+          var keys = Object.keys(map);
+          if (!keys.length) return null;
+          keys.sort(function (a, b) { return b.length - a.length; });
+          var pat = keys.map(function (k) {
+            return k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          }).join("|");
+          _EMOTE_RE = new RegExp("\\b(?:" + pat + ")\\b", "g");
+          return _EMOTE_RE;
+        }
+
+        // All known emote names present in the text.
+        function emoteMatches(text) {
+          var re = emoteRegex();
+          if (!re) return [];
+          var g = new RegExp(re.source, "g");
+          return text.match(g) || [];
+        }
+
+        // Does the text contain an emote tied to the given person?
+        function messageHasPersonEmote(text, personId) {
+          var pre = PERSON_EMOTE_PREFIX[String(personId == null ? "" : personId).toLowerCase()];
+          if (!pre) return false;
+          var ms = emoteMatches(text);
+          pre = pre.toLowerCase();
+          for (var i = 0; i < ms.length; i++) {
+            if (ms[i].toLowerCase().indexOf(pre) === 0) return true;
+          }
+          return false;
+        }
+
+        // Does the text contain any emote that is NOT perindigo's (perin*)?
+        // Perindigo's emotes are generic (host/broadcaster), so they're safe to
+        // show in any clue; other channels' / the person's own emotes are not.
+        function messageHasNonPerinEmote(text) {
+          var ms = emoteMatches(text);
+          for (var i = 0; i < ms.length; i++) {
+            if (ms[i].toLowerCase().indexOf("perin") !== 0) return true;
+          }
+          return false;
+        }
+
+        // Pick the 4 statements (clues) for a round. Constraints:
+        //  - clue 1 & clue 2: emotes allowed, but only perindigo's (perin*)
+        //  - clue 3: emotes allowed, but never the person's own
+        //  - clue 4: any emotes, including the person's own
+        // Perindigo's emotes are generic, so they never reveal the answer.
         function drawStatements(person) {
-          var pool = (person.statements || []).slice();
-          return shuffle(pool).slice(0, Math.min(4, pool.length));
+          var stmts = (person.statements || []).slice();
+          function isPerson(s) { return messageHasPersonEmote(s, person.id); }
+          function isNonPerin(s) { return messageHasNonPerinEmote(s); }
+          function hasEmote(s) { return emoteMatches(s).length > 0; }
+
+          // A: non-perin emote that is the person's own  -> clue 4 only
+          var A = stmts.filter(function (s) { return isNonPerin(s) && isPerson(s); });
+          // B: non-perin emote, not the person's own     -> clue 3 (or 4)
+          var B = stmts.filter(function (s) { return isNonPerin(s) && !isPerson(s); });
+          // C: only perindigo (perin*) emotes, no non-perin emote -> clues 1/2/3/4
+          var C = stmts.filter(function (s) { return !isNonPerin(s) && hasEmote(s); });
+          // D: no emotes at all                            -> anywhere
+          var D = stmts.filter(function (s) { return !hasEmote(s); });
+          shuffle(A); shuffle(B); shuffle(C); shuffle(D);
+
+          var used = {};
+          function take(list) {
+            for (var i = 0; i < list.length; i++) {
+              if (!used[list[i]]) { used[list[i]] = 1; return list[i]; }
+            }
+            return null;
+          }
+          function anyUnused() {
+            for (var i = 0; i < stmts.length; i++) {
+              if (!used[stmts[i]]) { used[stmts[i]] = 1; return stmts[i]; }
+            }
+            return null;
+          }
+
+          // clues 1 & 2: prefer perin-only emotes (C), else plain (D)
+          var c1 = take(C) || take(D) || anyUnused();
+          var c2 = take(C) || take(D) || anyUnused();
+          // clue 3: prefer other channels' emotes (B), else perin (C), else plain (D)
+          var c3 = take(B) || take(C) || take(D) || anyUnused();
+          // clue 4: prefer the person's own emote (A), else anything
+          var c4 = take(A) || take(B) || take(C) || take(D) || anyUnused();
+          return [c1, c2, c3, c4].map(function (x) { return x == null ? "" : x; });
         }
 
         function markUsed(id) {
@@ -1241,6 +1347,26 @@ you start a fresh run.
         function esc(s) {
           return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
             .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        // Render a chat message: HTML-escape, then swap any known emote tokens
+        // (exact match, word-bounded) for inline <img> emotes. Unknown tokens
+        // stay as plain text. The animated image URL is attempted first; if it
+        // 404s (static-only emote), onerror falls back to the static URL.
+        function renderMessage(text) {
+          var html = esc(text);
+          var map = window.WHODUNCHAT_EMOTES || {};
+          var re = emoteRegex();
+          if (re) {
+            html = html.replace(re, function (m) {
+              var def = map[m];
+              var anim = def.replace("/default/dark/", "/animated/dark/");
+              return '<img class="emote" src="' + anim + '" alt="' + m +
+                '" title="' + m + '" loading="lazy" onerror="this.onerror=null;this.src=\'' +
+                def + '\'">';
+            });
+          }
+          return html;
         }
 
         function pad(n) {
@@ -1323,7 +1449,7 @@ you start a fresh run.
                 '<span class="wanted-no">Statement ' + pad(i + 1) + '</span>' +
                 '<span class="wanted-date">' + date + '</span>' +
                 '</div>' +
-                '<p class="wanted-text">' + esc(text) + '</p>' +
+                '<p class="wanted-text">' + renderMessage(text) + '</p>' +
                 paidHtml(i) +
                 '</div></li>';
             } else {
@@ -1553,28 +1679,39 @@ you start a fresh run.
           return d[m - 1][n - 1];
         }
 
-        function suggestNames(q) {
-          var low = q.toLowerCase();
-          return pool.filter(function (p) {
-            return !isRuledOut(p.name) && p.name.toLowerCase().indexOf(low) !== -1;
-          });
-        }
+        // Cap on the live suggestion dropdown so a short query (now that the
+        // pool has ~2,450 decoy names) doesn't render hundreds of buttons.
+        var SUGGEST_CAP = 10;
 
-        function closestNames(q, limit) {
+        // Unified, query-reflective matcher used by BOTH the suggestion
+        // dropdown and the closest-match buttons. Unlike the old Levenshtein
+        // "closest" ranker, this only considers names that actually CONTAIN
+        // the typed text (substring), so the buttons mirror what the
+        // autocomplete dropdown shows. Ties break on edit distance + length;
+        // if nothing contains the text (e.g. a typo) it falls back to the
+        // nearest names by edit distance so the buttons are never empty.
+        function rankedMatches(q, limit) {
           var trimmed = q.trim();
           if (!trimmed) return [];
           var low = trimmed.toLowerCase();
           var cands = pool.filter(function (p) { return !isRuledOut(p.name); });
-          var scored = cands.map(function (p) {
+          var sub = [];
+          var dist = [];
+          cands.forEach(function (p) {
             var nameLow = p.name.toLowerCase();
-            var d = lev(low, nameLow);
-            if (low.length >= 2 && nameLow.indexOf(low) === 0) d -= 2;
-            return { name: p.name, d: d };
+            var idx = nameLow.indexOf(low);
+            if (idx !== -1) {
+              var s = idx + lev(low, nameLow) * 0.1 + nameLow.length * 0.01;
+              if (idx === 0) s -= 100;
+              sub.push({ name: p.name, s: s });
+            } else {
+              dist.push({ name: p.name, d: lev(low, nameLow) });
+            }
           });
-          scored.sort(function (a, b) {
-            return a.d - b.d || a.name.localeCompare(b.name);
-          });
-          return scored.slice(0, limit).map(function (s) { return s.name; });
+          sub.sort(function (a, b) { return a.s - b.s || a.name.localeCompare(b.name); });
+          if (sub.length) return sub.slice(0, limit).map(function (x) { return x.name; });
+          dist.sort(function (a, b) { return a.d - b.d || a.name.localeCompare(b.name); });
+          return dist.slice(0, limit).map(function (x) { return x.name; });
         }
 
         function renderSuggest() {
@@ -1585,7 +1722,7 @@ you start a fresh run.
             el.hidden = true;
             return;
           }
-          var matches = suggestNames(q);
+          var matches = rankedMatches(q, SUGGEST_CAP);
           if (!matches.length) {
             el.hidden = true;
             return;
@@ -1594,12 +1731,12 @@ you start a fresh run.
             var btn = document.createElement("button");
             btn.type = "button";
             btn.className = "guess-suggest-btn";
-            btn.textContent = p.name;
+            btn.textContent = p;
             btn.addEventListener("mousedown", function (e) {
               if (e && e.preventDefault) e.preventDefault();
             });
             btn.addEventListener("click", function () {
-              document.getElementById("guess-input").value = p.name;
+              document.getElementById("guess-input").value = p;
               document.getElementById("guess-hint").hidden = true;
               document.getElementById("guess-suggest").hidden = true;
               renderClosest();
@@ -1614,7 +1751,7 @@ you start a fresh run.
           var wrap = document.getElementById("guess-closest");
           var el = document.getElementById("guess-closest-btns");
           el.innerHTML = "";
-          var closest = closestNames(q, 3);
+          var closest = rankedMatches(q, 3);
           if (!closest.length || round.state !== "active") {
             wrap.hidden = true;
             return;
