@@ -848,6 +848,7 @@ four guesses. Miss all four and the suspect walks.
               <div class="stats-grid" id="stats-grid" hidden></div>
 
               <button class="ghost-btn" id="btn-reset-stats">start a fresh run</button>
+              <button class="ghost-btn" id="btn-clear-stats">reset statistics</button>
               <button class="ghost-btn" id="btn-stats-back">← back to the front page</button>
             </div>
 
@@ -1008,39 +1009,45 @@ you start a fresh run.
         }
         function readStreak() {
           try {
-            var n = parseInt(sessionStorage.getItem(STREAK_KEY), 10);
+            var n = parseInt(localStorage.getItem(STREAK_KEY), 10);
             return isNaN(n) || n < 0 ? 0 : n;
           } catch (e) { return 0; }
         }
         function writeStreak(n) {
           try {
-            sessionStorage.setItem(STREAK_KEY, String(n));
+            localStorage.setItem(STREAK_KEY, String(n));
           } catch (e) {}
         }
         function readBest() {
           try {
-            var n = parseInt(sessionStorage.getItem(BEST_KEY), 10);
+            var n = parseInt(localStorage.getItem(BEST_KEY), 10);
             return isNaN(n) || n < 0 ? 0 : n;
           } catch (e) { return 0; }
         }
         function writeBest(n) {
           try {
-            sessionStorage.setItem(BEST_KEY, String(n));
+            localStorage.setItem(BEST_KEY, String(n));
           } catch (e) {}
         }
         function readRecords() {
           try {
-            var obj = JSON.parse(sessionStorage.getItem(RECORDS_KEY) || "{}");
+            var obj = JSON.parse(localStorage.getItem(RECORDS_KEY) || "{}");
             return obj && typeof obj === "object" ? obj : {};
           } catch (e) { return {}; }
         }
         function writeRecords(obj) {
           try {
-            sessionStorage.setItem(RECORDS_KEY, JSON.stringify(obj));
+            localStorage.setItem(RECORDS_KEY, JSON.stringify(obj));
           } catch (e) {}
+        }
+        function clearStats() {
+          try { localStorage.removeItem(STREAK_KEY); } catch (e) {}
+          try { localStorage.removeItem(BEST_KEY); } catch (e) {}
+          try { localStorage.removeItem(RECORDS_KEY); } catch (e) {}
         }
         function clearRun() {
           clearUsed();
+          run = null;
         }
 
         // The "start a fresh run" buttons stay disabled until the player has
@@ -1359,12 +1366,36 @@ you start a fresh run.
           var used = readUsed();
           var unused = roster.filter(function (p) { return used.indexOf(p.id) === -1; });
           if (!unused.length) return false;
-          run = { order: shuffle(unused), index: 0 };
+          run = { order: shuffle(unused), index: 0, wins: 0, losses: 0 };
           guessAttempted = false;
           updateResetButtons();
           startRound(run.order[0]);
           renderRound();
           return true;
+        }
+
+        // Resume an in-progress run instead of always rebuilding it. Rebuilding
+        // via startGame() would shrink the run to the remaining unused people and
+        // reset the run stats, which is why backing out and reopening lost
+        // progress. We keep the existing run (same order, index, tallies) and
+        // either continue the active round or advance past a finished one.
+        function resumeOrStart() {
+          if (run && run.index < run.order.length) {
+            if (round && round.state === "active") {
+              renderRound();
+              showScreen("game");
+              updateResetButtons();
+              return;
+            }
+            advanceRound();
+            updateResetButtons();
+            return;
+          }
+          if (startGame()) {
+            renderProgress(pool.length);
+            updateResetButtons();
+            showScreen("game");
+          }
         }
 
         function startRound(person) {
@@ -1683,23 +1714,13 @@ you start a fresh run.
           var summary = document.getElementById("result-summary");
           summary.innerHTML = stats ? esc(stats) : "";
 
-          var records = readRecords();
-          var runIdentified = 0;
-          var runWalked = 0;
-          Object.keys(records).forEach(function (id) {
-            var r = records[id];
-            if (!r) return;
-            if (r.won) runIdentified++;
-            else runWalked++;
-          });
-
           fillStatGrid("result-grid", [
             { id: "stat-result-outcome", label: "outcome", value: won ? "identified" : "walked" },
             { id: "stat-result-guesses", label: "guesses used", value: String(guesses) },
             { id: "stat-result-statements", label: "statements revealed", value: String(round.revealIndex + 1) },
-            { id: "stat-result-case", label: "case", value: Object.keys(records).length + " of " + roster.length },
-            { id: "stat-result-identified", label: "identified", value: String(runIdentified) },
-            { id: "stat-result-walked", label: "walked", value: String(runWalked) },
+            { id: "stat-result-case", label: "case", value: (run.index + 1) + " of " + run.order.length },
+            { id: "stat-result-identified", label: "identified", value: String(run.wins) },
+            { id: "stat-result-walked", label: "walked", value: String(run.losses) },
             { id: "stat-result-streak", label: "streak", value: String(readStreak()) }
           ]);
         }
@@ -1854,6 +1875,7 @@ you start a fresh run.
 
         function winRound(name) {
           round.state = "won";
+          run.wins++;
           document.getElementById("guess-input").value = name;
           var streak = readStreak() + 1;
           writeStreak(streak);
@@ -1900,6 +1922,7 @@ you start a fresh run.
 
         function loseRound() {
           round.state = "lost";
+          run.losses++;
           writeStreak(0);
           recordResult(round.person, false);
           renderHudStreak();
@@ -2009,12 +2032,7 @@ you start a fresh run.
           renderProgress(pool.length);
 
           document.getElementById("btn-start").addEventListener("click", function () {
-            if (startGame()) {
-          renderProgress(pool.length);
-          updateResetButtons();
-
-              showScreen("game");
-            }
+            resumeOrStart();
           });
           document.getElementById("btn-drop").addEventListener("click", function () {
             if (round && round.person) unmarkUsed(round.person.id);
@@ -2047,6 +2065,12 @@ you start a fresh run.
           });
           document.getElementById("btn-reset").addEventListener("click", doReset);
           document.getElementById("btn-reset-stats").addEventListener("click", doReset);
+          document.getElementById("btn-clear-stats").addEventListener("click", function () {
+            if (window.confirm("Reset all case statistics? This cannot be undone.")) {
+              clearStats();
+              renderStats();
+            }
+          });
           document.getElementById("btn-stats").addEventListener("click", function () {
             renderStats();
             showScreen("stats");
