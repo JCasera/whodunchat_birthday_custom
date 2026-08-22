@@ -39,8 +39,8 @@ window.WHODUNCHAT_DATA = {
         "congrats on the milestone!",
         "I mostly lurk but this is a nice community"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "mod-mike",
@@ -56,8 +56,8 @@ window.WHODUNCHAT_DATA = {
         "raid incoming, everyone say hi",
         "rules are on the left, read them"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "night-owl",
@@ -73,8 +73,8 @@ window.WHODUNCHAT_DATA = {
         "somebody's gotta stay awake to watch the raid",
         "ok i'm passing out after this one for real"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "raidboss-k",
@@ -90,8 +90,8 @@ window.WHODUNCHAT_DATA = {
         "give it up for the host you don't have to",
         "raiding out in 5, say your goodbyes"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "sneaky-sam",
@@ -107,8 +107,8 @@ window.WHODUNCHAT_DATA = {
         "nice",
         "LUL"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "gramps",
@@ -124,8 +124,8 @@ window.WHODUNCHAT_DATA = {
         "turn the music down, i can't hear the game",
         "i'll be in the garden if anyone needs me"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "clip-kat",
@@ -141,8 +141,8 @@ window.WHODUNCHAT_DATA = {
         "pov: you missed the clip because you blinked",
         "someone make that a soundbite"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "new-kid",
@@ -158,8 +158,8 @@ window.WHODUNCHAT_DATA = {
         "what does sub mean",
         "this is cool, i'll come back"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     },
     {
       id: "money-mutt",
@@ -175,8 +175,8 @@ window.WHODUNCHAT_DATA = {
         "i will not be taking questions",
         "my wallet is crying but i'm not"
       ],
-      videoWin: "https://drive.google.com/file/d/REPLACE_WIN/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/REPLACE_LOSE/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
     }
   ]
 };
