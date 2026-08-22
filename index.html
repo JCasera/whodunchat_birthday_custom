@@ -227,6 +227,7 @@
         display: inline-flex;
       }
       .ghost-btn:hover { color: var(--paper); }
+      .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
 
       .stats-grid {
         display: grid;
@@ -267,6 +268,7 @@
         line-height: 1.6;
       }
       .case-status strong { color: var(--paper); font-weight: 700; }
+      .case-status.is-reset { color: var(--ember-hot); font-weight: 700; }
 
       .credit-note {
         border-top: 1px solid var(--rule);
@@ -845,6 +847,7 @@ four guesses. Miss all four and the suspect walks.
 
               <div class="stats-grid" id="stats-grid" hidden></div>
 
+              <button class="ghost-btn" id="btn-reset-stats">start a fresh run</button>
               <button class="ghost-btn" id="btn-stats-back">← back to the front page</button>
             </div>
 
@@ -1040,6 +1043,27 @@ you start a fresh run.
           clearUsed();
         }
 
+        // The "start a fresh run" buttons stay disabled until the player has
+        // actually made a guess this run, so they can't reset an empty run.
+        function updateResetButtons() {
+          var disabled = !guessAttempted;
+          var b = document.getElementById("btn-reset");
+          if (b) b.disabled = disabled;
+          var s = document.getElementById("btn-reset-stats");
+          if (s) s.disabled = disabled;
+        }
+
+        function doReset() {
+          clearRun();
+          guessAttempted = false;
+          renderProgress(pool.length);
+          updateResetButtons();
+          showScreen("home");
+          var el = document.getElementById("case-status");
+          el.innerHTML = "<strong>Run reset.</strong> A fresh case is on the desk.";
+          el.className = "case-status is-reset";
+        }
+
         /* ---------- validation ---------- */
         function warn(message) {
           console.warn("[whodunchat] " + message);
@@ -1142,6 +1166,7 @@ you start a fresh run.
           var used = readUsed();
           var remaining = roster.length - used.length;
           var el = document.getElementById("case-status");
+          el.className = "case-status";
           renderHomeMeta();
 
           if (roster.length === 0) {
@@ -1177,6 +1202,7 @@ you start a fresh run.
         var run = null;
         var round = null;
         var pool = [];
+        var guessAttempted = false;
 
         function shuffle(list) {
           var a = list.slice();
@@ -1246,10 +1272,12 @@ you start a fresh run.
           return false;
         }
 
-        // Pick the 6 statements (clues) for a round. Mapping:
-        //  - clues 1 & 2: original clue-1/2 rules (perin-only emotes C, else plain D)
-        //  - clues 3 & 4: original clue-3 rules (other channels' emotes B, else C, else D)
-        //  - clues 5 & 6: original clue-4 rules (person's own emote A, else anything)
+        // Pick the 6 statements (clues) for a round. Each round rolls a small
+        // emote count (1-3, averaged ~1.5); those emote statements are placed
+        // first per the rules (a person's OWN emote A is restricted to the late
+        // slots 5-6; other emotes B/C may go anywhere), and any that can't be
+        // placed are dropped (no minimum). The remaining slots are filled with
+        // plain (D) statements, so plain lines dominate and rounds vary.
         // Perindigo's emotes are generic, so they never reveal the answer.
         function drawStatements(person) {
           var stmts = (person.statements || []).slice();
@@ -1257,13 +1285,14 @@ you start a fresh run.
           function isNonPerin(s) { return messageHasNonPerinEmote(s); }
           function hasEmote(s) { return emoteMatches(s).length > 0; }
 
-          // A: non-perin emote that is the person's own  -> clue 4 only
+          // Pools by emote type:
+          //  A = person's OWN non-perin emote (could reveal the answer)
+          //  B = another channel's non-perin emote (safe)
+          //  C = perindigo-only (perin*) emote (safe, generic)
+          //  D = no emotes at all (plain)
           var A = stmts.filter(function (s) { return isNonPerin(s) && isPerson(s); });
-          // B: non-perin emote, not the person's own     -> clue 3 (or 4)
           var B = stmts.filter(function (s) { return isNonPerin(s) && !isPerson(s); });
-          // C: only perindigo (perin*) emotes, no non-perin emote -> clues 1/2/3/4
           var C = stmts.filter(function (s) { return !isNonPerin(s) && hasEmote(s); });
-          // D: no emotes at all                            -> anywhere
           var D = stmts.filter(function (s) { return !hasEmote(s); });
           shuffle(A); shuffle(B); shuffle(C); shuffle(D);
 
@@ -1281,16 +1310,31 @@ you start a fresh run.
             return null;
           }
 
-          // clues 1 & 2: original clue-1/2 rules (perin-only emotes C, else plain D)
-          var c1 = take(C) || take(D) || anyUnused();
-          var c2 = take(C) || take(D) || anyUnused();
-          // clues 3 & 4: original clue-3 rules (other channels' emotes B, else C, else D)
-          var c3 = take(B) || take(C) || take(D) || anyUnused();
-          var c4 = take(B) || take(C) || take(D) || anyUnused();
-          // clues 5 & 6: original clue-4 rules (person's own emote A, else anything)
-          var c5 = take(A) || take(B) || take(C) || take(D) || anyUnused();
-          var c6 = take(A) || take(B) || take(C) || take(D) || anyUnused();
-          return [c1, c2, c3, c4, c5, c6].map(function (x) { return x == null ? "" : x; });
+          // Roll how many emotes this round: 1-3, weighted 50/30/20 to average ~1.5.
+          var r = Math.random();
+          var emoteCount = r < 0.5 ? 1 : (r < 0.8 ? 2 : 3);
+
+          var assigned = [null, null, null, null, null, null];
+
+          // Emote pass first, per the rules. Own-emote (A) only fits late slots
+          // (5-6); other emotes (B/C) fit anywhere. Unplaceable emotes are
+          // ignored (no minimum) so rounds stay random.
+          for (var e = 0; e < emoteCount; e++) {
+            var pools = [A, B, C]; shuffle(pools);
+            var emote = null;
+            for (var k = 0; k < pools.length; k++) { emote = take(pools[k]); if (emote) break; }
+            if (!emote) break;
+            var valid = (A.indexOf(emote) !== -1) ? [4, 5] : [0, 1, 2, 3, 4, 5];
+            var free = valid.filter(function (idx) { return assigned[idx] === null; });
+            if (!free.length) continue;
+            assigned[free[Math.floor(Math.random() * free.length)]] = emote;
+          }
+
+          // Plain fill: every remaining slot gets a plain (D) statement.
+          for (var i = 0; i < 6; i++) {
+            if (assigned[i] === null) assigned[i] = take(D) || anyUnused();
+          }
+          return assigned.map(function (x) { return x == null ? "" : x; });
         }
 
         function markUsed(id) {
@@ -1316,6 +1360,8 @@ you start a fresh run.
           var unused = roster.filter(function (p) { return used.indexOf(p.id) === -1; });
           if (!unused.length) return false;
           run = { order: shuffle(unused), index: 0 };
+          guessAttempted = false;
+          updateResetButtons();
           startRound(run.order[0]);
           renderRound();
           return true;
@@ -1800,6 +1846,8 @@ you start a fresh run.
         function guess(name) {
           if (!round || round.state !== "active") return;
           if (isRuledOut(name)) return;
+          guessAttempted = true;
+          updateResetButtons();
           if (name === round.person.name) winRound(name);
           else missRound(name);
         }
@@ -1962,7 +2010,9 @@ you start a fresh run.
 
           document.getElementById("btn-start").addEventListener("click", function () {
             if (startGame()) {
-              renderProgress(pool.length);
+          renderProgress(pool.length);
+          updateResetButtons();
+
               showScreen("game");
             }
           });
@@ -1995,10 +2045,8 @@ you start a fresh run.
           guessInput.addEventListener("blur", function () {
             document.getElementById("guess-suggest").hidden = true;
           });
-          document.getElementById("btn-reset").addEventListener("click", function () {
-            clearRun();
-            renderProgress(pool.length);
-          });
+          document.getElementById("btn-reset").addEventListener("click", doReset);
+          document.getElementById("btn-reset-stats").addEventListener("click", doReset);
           document.getElementById("btn-stats").addEventListener("click", function () {
             renderStats();
             showScreen("stats");
