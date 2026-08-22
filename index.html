@@ -1676,7 +1676,7 @@ you start a fresh run.
               guesses + (guesses === 1 ? " guess." : " guesses.");
           } else {
             answer.innerHTML = "It was <strong>" + esc(person.name) +
-              "</strong> — the suspect walked after 4 misses.";
+              "</strong> — the suspect walked after " + round.misses.length + " wrong guesses.";
           }
 
           var stats = formatStat(person);
@@ -1696,8 +1696,8 @@ you start a fresh run.
           fillStatGrid("result-grid", [
             { id: "stat-result-outcome", label: "outcome", value: won ? "identified" : "walked" },
             { id: "stat-result-guesses", label: "guesses used", value: String(guesses) },
-            { id: "stat-result-statements", label: "statements revealed", value: String(round.misses.length + 1) },
-            { id: "stat-result-case", label: "case", value: (run.index + 1) + " of " + run.order.length },
+            { id: "stat-result-statements", label: "statements revealed", value: String(round.revealIndex + 1) },
+            { id: "stat-result-case", label: "case", value: Object.keys(records).length + " of " + roster.length },
             { id: "stat-result-identified", label: "identified", value: String(runIdentified) },
             { id: "stat-result-walked", label: "walked", value: String(runWalked) },
             { id: "stat-result-streak", label: "streak", value: String(readStreak()) }
