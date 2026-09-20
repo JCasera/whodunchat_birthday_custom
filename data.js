@@ -3694,8 +3694,8 @@ window.WHODUNCHAT_DATA = {
         "that's ME",
         "wuhhh",
       ],
-      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
+      videoWin: "https://drive.google.com/file/d/18odQdKk0w4lk0Kqob5ki5LmOBLY0Poqo/view?usp=sharing",
+      videoLose: "https://drive.google.com/file/d/1CuCPb3rb87MJ9tRFDpxGyMEDeYX6kFyl/view?usp=sharing"
     },
     {
       id: "jackiemeyers",
