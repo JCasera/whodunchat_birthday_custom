@@ -677,11 +677,17 @@
         display: block;
         width: 100%;
         aspect-ratio: 16 / 9;
+        min-height: clamp(320px, 52vw, 520px);
         border: 1px solid var(--rule);
         border-radius: .6rem;
         background: var(--ground-2);
         box-shadow: 4px 5px oklch(0% none none / .45);
       }
+      #screen-result .home-body {
+        grid-template-columns: 1fr;
+        grid-template-areas: "filing";
+      }
+      #filing-result { max-width: none; }
 
       .no-clock {
         height: var(--timer-h);
@@ -949,24 +955,6 @@ you start a fresh run.
                 <button class="ghost-btn" id="btn-home">back to the front page</button>
               </div>
             </div>
-
-            <aside class="spotlight">
-              <article class="desk-card" style="--tilt: .5deg">
-                <div class="desk-head">
-                  <span>Case file</span>
-                  <span>last round</span>
-                </div>
-                <h2 class="desk-name">The record so far</h2>
-                <p class="desk-body">
-                  <span class="desk-cap">C</span>
-                lose the case closed on this file. Guesses are counted, streaks
-                are kept, and every identified person stays on the record until
-                you start a fresh run.
-                </p>
-                <div class="desk-fill"></div>
-                <p class="desk-standing">Videos play from Google Drive — no sign-in needed. Stats persist until you close the tab.</p>
-              </article>
-            </aside>
           </div>
         </div>
       </section>
