@@ -820,7 +820,7 @@
               <button class="ghost-btn" id="btn-debug">debug: off</button>
 
               <p class="credit-note">
-                This is a <strong>happy birthday fan copy</strong> of whodunchat — made for fun,
+                This is <strong>a customized fan copy for a friend's birthday</strong> of whodunchat — made for fun,
                 not the full experience. The original game is by
                 <a href="https://whodunchat.ducksaint.com" target="_blank" rel="noopener">DuckSaint</a>;
                 play the real thing at
@@ -832,7 +832,7 @@
               <article class="desk-card" style="--tilt: .6deg">
                 <div class="desk-head">
                   <span>Case file</span>
-                  <span>birthday fan copy</span>
+                  <span>Happy Birthday Peri!</span>
                 </div>
                 <h2 class="desk-name">Who said it?</h2>
                 <p class="desk-body">
@@ -873,7 +873,6 @@ four guesses. Miss all four and the suspect walks.
 
               <div class="stats-grid" id="stats-grid" hidden></div>
 
-              <button class="ghost-btn" id="btn-reset-stats">start a fresh run</button>
               <button class="ghost-btn" id="btn-clear-stats">reset statistics</button>
               <button class="ghost-btn" id="btn-stats-back">← back to the front page</button>
             </div>
@@ -1059,14 +1058,12 @@ you start a fresh run.
           run = null;
         }
 
-        // The "start a fresh run" buttons stay disabled until the player has
+        // The "start a fresh run" button stays disabled until the player has
         // actually made a guess this run, so they can't reset an empty run.
         function updateResetButtons() {
           var disabled = !guessAttempted;
           var b = document.getElementById("btn-reset");
           if (b) b.disabled = disabled;
-          var s = document.getElementById("btn-reset-stats");
-          if (s) s.disabled = disabled;
         }
 
         function doReset() {
@@ -2096,7 +2093,6 @@ you start a fresh run.
             document.getElementById("guess-suggest").hidden = true;
           });
           document.getElementById("btn-reset").addEventListener("click", doReset);
-          document.getElementById("btn-reset-stats").addEventListener("click", doReset);
           document.getElementById("btn-clear-stats").addEventListener("click", function () {
             if (window.confirm("Reset all case statistics? This cannot be undone.")) {
               clearStats();
