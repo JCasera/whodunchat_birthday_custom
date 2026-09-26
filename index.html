@@ -688,6 +688,26 @@
         grid-template-areas: "filing";
       }
       #filing-result { max-width: none; }
+      .result-statements {
+        border: 1px solid var(--rule);
+        border-radius: .55rem;
+        background: var(--ground-2);
+        padding: .6rem .8rem;
+        margin: 0 0 .9rem;
+      }
+      .result-statements[hidden] { display: none; }
+      .result-statements summary {
+        cursor: pointer;
+        font-family: var(--font-file);
+        font-size: var(--fs-meta);
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--paper);
+        padding: .3rem 0;
+      }
+      .result-statements summary:hover { color: var(--ember-hot); }
+      .result-statements .wanted-list { margin-top: .7rem; }
+      .result-statements .wanted-item { animation: none; }
 
       .no-clock {
         height: var(--timer-h);
@@ -937,10 +957,6 @@ you start a fresh run.
 
           <div class="home-body">
             <div class="filing" id="filing-result">
-              <div>
-                <span class="field-label">Case outcome</span>
-              </div>
-
               <div class="round-status" id="round-status" hidden></div>
 
               <div class="result-video" id="result-video" hidden></div>
@@ -949,6 +965,11 @@ you start a fresh run.
               <p class="case-status" id="result-summary"></p>
 
               <div class="stats-grid" id="result-grid" hidden></div>
+
+              <details class="result-statements" id="result-statements" hidden>
+                <summary id="result-statements-summary">View statements</summary>
+                <ol class="wanted-list" id="result-statements-list"></ol>
+              </details>
 
               <div class="round-actions" id="round-actions" hidden>
                 <button class="play-btn" id="btn-next">next case</button>
@@ -1409,6 +1430,13 @@ you start a fresh run.
           status.className = "round-status";
           status.hidden = true;
           document.getElementById("round-actions").hidden = true;
+          var rs = document.getElementById("result-statements");
+          if (rs) {
+            rs.hidden = true;
+            rs.open = false;
+            var rl = document.getElementById("result-statements-list");
+            if (rl) rl.innerHTML = "";
+          }
           return round;
         }
 
@@ -1670,7 +1698,6 @@ you start a fresh run.
                 .format(d) + " " + d.getUTCFullYear());
           }
           if (typeof person.subMonths === "number") parts.push("subbed " + person.subMonths + " months");
-          if (typeof person.messages === "number") parts.push(person.messages + " chats");
           return parts.join(" · ");
         }
 
@@ -1703,14 +1730,31 @@ you start a fresh run.
           summary.innerHTML = stats ? esc(stats) : "";
 
           fillStatGrid("result-grid", [
-            { id: "stat-result-outcome", label: "outcome", value: won ? "identified" : "walked" },
+            { id: "stat-result-outcome", label: "outcome", value: won ? "Identified" : "Walked" },
             { id: "stat-result-guesses", label: "guesses used", value: String(guesses) },
-            { id: "stat-result-statements", label: "statements revealed", value: String(round.revealIndex + 1) },
             { id: "stat-result-case", label: "case", value: (run.index + 1) + " of " + run.order.length },
             { id: "stat-result-identified", label: "identified", value: String(run.wins) },
             { id: "stat-result-walked", label: "walked", value: String(run.losses) },
             { id: "stat-result-streak", label: "streak", value: String(readStreak()) }
           ]);
+
+          var stmtBox = document.getElementById("result-statements");
+          var stmtSummary = document.getElementById("result-statements-summary");
+          var stmtList = document.getElementById("result-statements-list");
+          if (stmtBox && stmtList) {
+            var sHtml = "";
+            round.statements.forEach(function (text, i) {
+              sHtml += '<li class="wanted-item">' +
+                '<div class="wanted-item-head">' +
+                '<span class="wanted-no">Statement ' + pad(i + 1) + '</span>' +
+                '</div>' +
+                '<p class="wanted-text">' + renderMessage(text) + '</p></li>';
+            });
+            stmtList.innerHTML = sHtml;
+            if (stmtSummary) stmtSummary.textContent = "View statements (" + round.statements.length + ")";
+            stmtBox.open = false;
+            stmtBox.hidden = false;
+          }
         }
 
         /* ---------- guessing (Phase 2 Step 2) ---------- */
