@@ -637,7 +637,9 @@ window.WHODUNCHAT_DATA = {
         "sakurahICANT",
       ],
       videoWin: "https://drive.google.com/file/d/1GcSc-F2N9nsvJG3mN0EhRvEbO-6mtVXb/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1g6gSFkWkQCHkd-esJUGHeYtGfxaja2jj/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1g6gSFkWkQCHkd-esJUGHeYtGfxaja2jj/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "chrysaliacsilla",
@@ -2272,7 +2274,9 @@ window.WHODUNCHAT_DATA = {
         "@EnjoBG LMFAOOO",
       ],
       videoWin: "https://drive.google.com/file/d/1uv6-sFnmrG_r3cDtZ5063FOun-p_bK6s/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1EBrBjgqXJbm9GjWxHFoXkHQ4oFrWsnO4/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1EBrBjgqXJbm9GjWxHFoXkHQ4oFrWsnO4/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "pocketchalk",
@@ -3400,7 +3404,9 @@ window.WHODUNCHAT_DATA = {
         "Yeeeeessssss!!!",
       ],
       videoWin: "https://drive.google.com/file/d/1sA3j8_F1gWHLeLKtHxJ2eheJPH8GfIR9/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1Yo_zq9R2QLadxhDGqc_y1J6wQRig0BmW/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1Yo_zq9R2QLadxhDGqc_y1J6wQRig0BmW/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "purrodie",
@@ -3494,7 +3500,9 @@ window.WHODUNCHAT_DATA = {
         "Both hahaha",
       ],
       videoWin: "https://drive.google.com/file/d/1Q6uYpTMre_Kk_Cey1iLC9dIC8Gb2ootq/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1c5ajI5xYB7AyjXRNRPzKJCsWQQiLvNDq/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1c5ajI5xYB7AyjXRNRPzKJCsWQQiLvNDq/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "eikkop",
@@ -3695,7 +3703,9 @@ window.WHODUNCHAT_DATA = {
         "wuhhh",
       ],
       videoWin: "https://drive.google.com/file/d/18odQdKk0w4lk0Kqob5ki5LmOBLY0Poqo/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1CuCPb3rb87MJ9tRFDpxGyMEDeYX6kFyl/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1CuCPb3rb87MJ9tRFDpxGyMEDeYX6kFyl/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "jackiemeyers",
@@ -4043,7 +4053,9 @@ window.WHODUNCHAT_DATA = {
         "\\o/",
       ],
       videoWin: "https://drive.google.com/file/d/1d8G11rVI2oqy_PTbicNIJW72z2Y-ynS6/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1j76w1P_j4yVHGMAKJOWpB5cs-YumEebD/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1j76w1P_j4yVHGMAKJOWpB5cs-YumEebD/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "spellydoesart",
@@ -4165,7 +4177,9 @@ window.WHODUNCHAT_DATA = {
         "NOOO PERIIII",
       ],
       videoWin: "https://drive.google.com/file/d/1ORMwNSYgpBIwpzwgIGUcJE1clrrtaYHK/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1Dp1-4mI68jDz-A1Jk9ctUm_8SJ4EA6cD/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1Dp1-4mI68jDz-A1Jk9ctUm_8SJ4EA6cD/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "dearninette",
@@ -4356,7 +4370,9 @@ window.WHODUNCHAT_DATA = {
         "@histeric_g dearWave",
       ],
       videoWin: "https://drive.google.com/file/d/1smLSCsdLdk9ypLfn-7_FMJfml04eeZHR/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1Yo_zq9R2QLadxhDGqc_y1J6wQRig0BmW/view?usp=sharing"
+      videoLose: "https://drive.google.com/file/d/1Yo_zq9R2QLadxhDGqc_y1J6wQRig0BmW/view?usp=sharing",
+      videoAltWin: "Victory video coming soon — great work closing this case!",
+      videoAltLose: "Farewell video coming soon — the suspect still walked!"
     },
     {
       id: "perindigo",
@@ -5562,8 +5578,10 @@ window.WHODUNCHAT_DATA = {
         "im making that the new stream title",
         "ive been trying to decrease it but not today lol",
       ],
-      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",
-      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
+      videoWin: null,
+      videoLose: null,
+      videoAltWin: "Good job, you figured out it was yourself! I didn't have time to record a video, and I know you were too busy to record one yourself, but Happy Birthday butterfly. I hope you have fun today with this silly little game I threw together with the help of some of your friends. Be sure to thank them too!",
+      videoAltLose: "You know, I'm not surprised you didn't realize what you type in your own chat. In any case, I hope you are enjoying this fun little game I put together with the help of some of your friends. Have a great birthday Peri, and maybe keep an eye on what you type going forward."
     },
   ]
 };

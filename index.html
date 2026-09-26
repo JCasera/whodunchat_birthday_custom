@@ -683,6 +683,15 @@
         background: var(--ground-2);
         box-shadow: 4px 5px oklch(0% none none / .45);
       }
+      .result-video-alt {
+        border: 1px solid var(--stamp);
+        border-top: 3px solid var(--stamp);
+        background: color-mix(in oklch, var(--stamp) 12%, var(--ground));
+        font-size: var(--fs-body);
+        padding: .85rem .95rem;
+        line-height: 1.55;
+        margin: 0;
+      }
       #screen-result .home-body {
         grid-template-columns: 1fr;
         grid-template-areas: "filing";
@@ -1111,6 +1120,12 @@ you start a fresh run.
               if (url && !isDriveLink(url))
                 problems.push(warn(person.name + " " + field + " is not a parseable Google Drive link."));
             });
+            if (person.videoAltWin !== undefined && person.videoAltWin !== null &&
+                (typeof person.videoAltWin !== "string" || !person.videoAltWin.trim()))
+              problems.push(warn(person.name + " videoAltWin must be a non-empty string or omitted."));
+            if (person.videoAltLose !== undefined && person.videoAltLose !== null &&
+                (typeof person.videoAltLose !== "string" || !person.videoAltLose.trim()))
+              problems.push(warn(person.name + " videoAltLose must be a non-empty string or omitted."));
           });
 
           OPTIONS.forEach(function (o) {
@@ -1708,8 +1723,11 @@ you start a fresh run.
               '" allow="autoplay" allowfullscreen loading="lazy"></iframe>';
             video.hidden = false;
           } else {
-            video.innerHTML = "";
-            video.hidden = true;
+            var rawAlt = won ? person.videoAltWin : person.videoAltLose;
+            var alt = (rawAlt && String(rawAlt).trim()) ?
+              String(rawAlt).trim() : "Video unavailable.";
+            video.innerHTML = '<p class="result-video-alt">' + esc(alt) + '</p>';
+            video.hidden = false;
           }
 
           var answer = document.getElementById("result-answer");

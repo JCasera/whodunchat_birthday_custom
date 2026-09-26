@@ -42,12 +42,15 @@ then open `http://localhost:8000`.
   messages: 1240,                   // chat participation -> hint: talks more/less
   statements: [ "...", "...", ... ], // chat lines; at least 4
   videoWin:  "https://drive.google.com/file/d/FILE_ID/view?usp=sharing", // optional (Phase 3)
-  videoLose: "https://drive.google.com/file/d/FILE_ID/view?usp=sharing"  // optional (Phase 3)
+  videoLose: "https://drive.google.com/file/d/FILE_ID/view?usp=sharing",  // optional (Phase 3)
+  videoAltWin:  "Victory video coming soon!",  // optional fallback text (win)
+  videoAltLose: "Farewell video coming soon!"  // optional fallback text (lose)
 }
 ```
 
 - Every roster person needs at least **4 statements**; extra ones are never shown to the player.
 - `videoWin` / `videoLose` are for Phase 3 (outcome videos). Share the file as **Anyone with the link → Viewer**, then paste the share link. `REPLACE_WIN` / `REPLACE_LOSE` are placeholders — any URL containing `REPLACE_` is treated as "no video" and the embed is skipped.
+- `videoAltWin` / `videoAltLose` are the fallback texts shown in place of the player when no video link is set (`null`, blank, `REPLACE_`, or unparseable) — win and lose versions respectively. Edit them per person in `data.js` (they are also emitted by `build_roster.py` / `build_perindigo.py`, so rebuilds keep them). Omit one to fall back to "Video unavailable."
 - On load, the app validates the data and prints warnings to the browser console (F12) if anything is off.
 
 ### `guess-options.js` — guess pool

@@ -19,6 +19,8 @@ NAME = {h: n for h, n in HANDLES}
 
 VIDEO_WIN = "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing"
 VIDEO_LOSE = "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"
+VIDEO_ALT_WIN = "Victory video coming soon \u2014 great work closing this case!"
+VIDEO_ALT_LOSE = "Farewell video coming soon \u2014 the suspect still walked!"
 
 def keep(text):
     t = text.strip()
@@ -87,7 +89,9 @@ for h, n in HANDLES:
         lines.append("        " + js_str(s) + ",")
     lines.append("      ],")
     lines.append("      videoWin: " + js_str(VIDEO_WIN) + ",")
-    lines.append("      videoLose: " + js_str(VIDEO_LOSE))
+    lines.append("      videoLose: " + js_str(VIDEO_LOSE) + ",")
+    lines.append("      videoAltWin: " + js_str(VIDEO_ALT_WIN) + ",")
+    lines.append("      videoAltLose: " + js_str(VIDEO_ALT_LOSE))
     lines.append("    },")
 lines.append("  ]")
 lines.append("};")

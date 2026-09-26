@@ -135,7 +135,9 @@ def main():
         lines.append('        "' + esc + '",')
     lines.append("      ],")
     lines.append('      videoWin: "https://drive.google.com/file/d/1y-oYjVZRtKv3Q4Cb5f3-hUGXLLgp-kfY/view?usp=sharing",')
-    lines.append('      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing"')
+    lines.append('      videoLose: "https://drive.google.com/file/d/1aKbvIFGdoLgHOGThAfnZdy6sV6kUe4z9/view?usp=sharing",')
+    lines.append('      videoAltWin: "Victory video coming soon \\u2014 great work closing this case!",')
+    lines.append('      videoAltLose: "Farewell video coming soon \\u2014 the suspect still walked!"')
     lines.append("    },")
     print("\n".join(lines))
 
