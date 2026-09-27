@@ -1303,9 +1303,10 @@ you start a fresh run.
         // Pick the 6 statements (clues) for a round. Each round rolls a small
         // emote count (1-3, averaged ~1.5); those emote statements are placed
         // first per the rules (a person's OWN emote A is restricted to the late
-        // slots 5-6; other emotes B/C may go anywhere), and any that can't be
-        // placed are dropped (no minimum). The remaining slots are filled with
-        // plain (D) statements, so plain lines dominate and rounds vary.
+        // slots 5-6, at most one per round; other emotes B/C may go anywhere),
+        // and any that can't be placed are dropped (no minimum). The remaining
+        // slots are filled with plain (D) statements, so plain lines dominate
+        // and rounds vary.
         // Perindigo's emotes are generic, so they never reveal the answer.
         function drawStatements(person) {
           var stmts = (person.statements || []).slice();
@@ -1331,9 +1332,10 @@ you start a fresh run.
             }
             return null;
           }
-          function anyUnused() {
+          function isOwn(s) { return A.indexOf(s) !== -1; }
+          function anyUnused(skipOwn) {
             for (var i = 0; i < stmts.length; i++) {
-              if (!used[stmts[i]]) { used[stmts[i]] = 1; return stmts[i]; }
+              if (!used[stmts[i]] && !(skipOwn && isOwn(stmts[i]))) { used[stmts[i]] = 1; return stmts[i]; }
             }
             return null;
           }
@@ -1345,22 +1347,27 @@ you start a fresh run.
           var assigned = [null, null, null, null, null, null];
 
           // Emote pass first, per the rules. Own-emote (A) only fits late slots
-          // (5-6); other emotes (B/C) fit anywhere. Unplaceable emotes are
-          // ignored (no minimum) so rounds stay random.
+          // (5-6); other emotes (B/C) fit anywhere. At most ONE own-emote per
+          // round so the answer can't be given away twice. Unplaceable emotes
+          // are ignored (no minimum) so rounds stay random.
+          var ownUsed = false;
           for (var e = 0; e < emoteCount; e++) {
-            var pools = shuffle([A, B, C]);
+            var pools = shuffle(ownUsed ? [B, C] : [A, B, C]);
             var emote = null;
             for (var k = 0; k < pools.length; k++) { emote = take(pools[k]); if (emote) break; }
             if (!emote) break;
-            var valid = (A.indexOf(emote) !== -1) ? [4, 5] : [0, 1, 2, 3, 4, 5];
+            var valid = isOwn(emote) ? [4, 5] : [0, 1, 2, 3, 4, 5];
             var free = valid.filter(function (idx) { return assigned[idx] === null; });
             if (!free.length) continue;
             assigned[free[Math.floor(Math.random() * free.length)]] = emote;
+            if (isOwn(emote)) ownUsed = true;
           }
 
           // Plain fill: every remaining slot gets a plain (D) statement.
+          // The last-resort fallback skips own-emotes while the cap is unspent
+          // space allows, so a thin D pool can't leak a second own-emote in.
           for (var i = 0; i < 6; i++) {
-            if (assigned[i] === null) assigned[i] = take(D) || anyUnused();
+            if (assigned[i] === null) assigned[i] = take(D) || anyUnused(ownUsed) || anyUnused(false);
           }
           return assigned.map(function (x) { return x == null ? "" : x; });
         }
