@@ -166,6 +166,9 @@
 
       .filing { grid-area: filing; gap: 1.1rem; display: grid; }
       .spotlight { grid-area: spotlight; align-self: stretch; }
+      #screen-home .spotlight, #screen-stats .spotlight { align-self: start; }
+      #screen-home .desk-card, #screen-stats .desk-card { height: auto; }
+      #screen-home .desk-fill, #screen-stats .desk-fill { flex: none; min-height: 1.2rem; }
 
       .field-label {
         font-family: var(--font-file);
@@ -805,7 +808,7 @@
         <div class="home-inner">
           <header class="masthead">
             <div class="dateline">
-              <span>The Local Chat Enquirer</span>
+              <span>A special birthday edition of</span>
               <span id="dateline-date"></span>
             </div>
             <h1 class="logo" id="logo"></h1>
@@ -826,11 +829,9 @@
 
               <button class="ghost-btn" id="btn-reset">start a fresh run</button>
               <button class="ghost-btn" id="btn-stats">case statistics</button>
-              <button class="ghost-btn" id="btn-debug">debug: off</button>
 
               <p class="credit-note">
-                This is <strong>a customized fan copy for a friend's birthday</strong> of whodunchat — made for fun,
-                not the full experience. The original game is by
+                This is <strong>a customized fan copy for a friend's birthday</strong> of whodunchat made for fun. The original game is by
                 <a href="https://whodunchat.ducksaint.com" target="_blank" rel="noopener">DuckSaint</a>;
                 play the real thing at
                 <a href="https://whodunchat.ducksaint.com" target="_blank" rel="noopener">whodunchat.ducksaint.com</a>.
@@ -845,14 +846,10 @@
                 </div>
                 <h2 class="desk-name">Who said it?</h2>
                 <p class="desk-body">
-                  <span class="desk-cap">A</span>
-person from the record is picked at random and one of their chat
-messages lands on the desk. Pick the name you think typed it.
-Get it wrong and another message turns up — four messages,
-four guesses. Miss all four and the suspect walks.
+Someone from your chat said these lines, can you guess who it is? You'll have 6 chances to guess, and each wrong guess gives a new hint. How well do you know your friends?
                 </p>
                 <div class="desk-fill"></div>
-                <p class="desk-standing">Every person on the record is a guessing target once per run. Dropping a case puts them back in the pool — correct guesses close the file; four misses send you back to the front page.</p>
+                <p class="desk-standing">Every person on the record is a guessing target once per run, but no one leave the pool of guesses.</p>
               </article>
             </aside>
           </div>
@@ -865,7 +862,7 @@ four guesses. Miss all four and the suspect walks.
         <div class="home-inner">
           <header class="masthead">
             <div class="dateline">
-              <span>The Local Chat Enquirer</span>
+              <span>A special birthday edition of</span>
               <span id="stats-date"></span>
             </div>
             <h1 class="logo" id="stats-logo"></h1>
@@ -894,10 +891,8 @@ four guesses. Miss all four and the suspect walks.
                 </div>
                 <h2 class="desk-name">The record so far</h2>
                 <p class="desk-body">
-                  <span class="desk-cap">E</span>
-very identified case adds to these totals. The longest streak is the
-most cases you closed back to back before a miss — it survives until
-you start a fresh run.
+Every case adds to these totals. The longest streak is the
+most cases you closed back to back before a miss.
                 </p>
                 <div class="desk-fill"></div>
                 <p class="desk-standing">Stats stay on the record until you close the tab.</p>
@@ -994,7 +989,6 @@ you start a fresh run.
         "use strict";
 
         var STORAGE_KEY = "peri_whodunchat_used";
-        var DEBUG_KEY = "peri_whodunchat_debug";
         var STREAK_KEY = "peri_whodunchat_streak";
         var BEST_KEY = "peri_whodunchat_best";
         var RECORDS_KEY = "peri_whodunchat_records";
@@ -1224,9 +1218,6 @@ you start a fresh run.
 
         /* ---------- game state (Phase 2) ---------- */
         var DEBUG = /[?&]debug=1/.test(location.search);
-        try {
-          if (localStorage.getItem(DEBUG_KEY) === "1") DEBUG = true;
-        } catch (e) {}
         var run = null;
         var round = null;
         var pool = [];
@@ -2130,14 +2121,6 @@ you start a fresh run.
           });
           document.getElementById("btn-stats-back").addEventListener("click", function () {
             showScreen("home");
-          });
-          document.getElementById("btn-debug").textContent = "debug: " + (DEBUG ? "on" : "off");
-          document.getElementById("btn-debug").addEventListener("click", function () {
-            try {
-              if (DEBUG) localStorage.removeItem(DEBUG_KEY);
-              else localStorage.setItem(DEBUG_KEY, "1");
-            } catch (e) {}
-            location.reload();
           });
         }
 
