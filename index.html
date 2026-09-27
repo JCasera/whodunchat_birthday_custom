@@ -846,7 +846,7 @@
                 </div>
                 <h2 class="desk-name">Who said it?</h2>
                 <p class="desk-body">
-Someone from your chat said these lines, can you guess who it is? You'll have 6 chances to guess, and each wrong guess gives a new hint. How well do you know your friends?
+Someone from your chat said these lines, can you guess who it is? You'll have 5 chances to guess, and each wrong guess gives a new hint. How well do you know your friends?
                 </p>
                 <div class="desk-fill"></div>
                 <p class="desk-standing">Every person on the record is a guessing target once per run, but no one leave the pool of guesses.</p>
@@ -915,7 +915,7 @@ most cases you closed back to back before a miss.
             </div>
           </div>
           <div class="hud-bar">
-            <span class="case-no" id="case-no">Statement 1 of 4</span>
+            <span class="case-no" id="case-no">Statement 1 of 5</span>
             <span class="pips" id="pips"></span>
           </div>
         </header>
@@ -1101,14 +1101,19 @@ most cases you closed back to back before a miss.
             if (seen[person.id]) problems.push(warn("duplicate id \"" + person.id + "\"."));
             seen[person.id] = true;
             if (!person.name) problems.push(warn("a person with id \"" + person.id + "\" has no name."));
-            if (!Array.isArray(person.statements) || person.statements.length < 4)
-              problems.push(warn(person.name + " has " + (person.statements ? person.statements.length : 0) + " statements; needs at least 4."));
+            if (!Array.isArray(person.statements) || person.statements.length < 5)
+              problems.push(warn(person.name + " has " + (person.statements ? person.statements.length : 0) + " statements; needs at least 5."));
             if (person.followedAt && Number.isNaN(Date.parse(person.followedAt)))
               problems.push(warn(person.name + " has an unparseable followedAt date."));
             if (typeof person.messages !== "number" || person.messages < 0)
               problems.push(warn(person.name + " needs a numeric messages count."));
             if (person.subMonths !== null && person.subMonths !== undefined && (typeof person.subMonths !== "number" || person.subMonths < 0))
               problems.push(warn(person.name + " subMonths must be a number or null."));
+            var nonOwn = (person.statements || []).filter(function (s) {
+              return !(messageHasNonPerinEmote(s) && messageHasPersonEmote(s, person.id));
+            });
+            if (nonOwn.length < 5)
+              problems.push(warn(person.name + " has only " + nonOwn.length + " non-own-emote statements; needs at least 5 now that own-emotes are off by default."));
             ["videoWin", "videoLose"].forEach(function (field) {
               var url = person[field];
               if (url && !isDriveLink(url))
@@ -1218,6 +1223,9 @@ most cases you closed back to back before a miss.
 
         /* ---------- game state (Phase 2) ---------- */
         var DEBUG = /[?&]debug=1/.test(location.search);
+        // Own-emote clues are disabled by default (too revealing); opt back
+        // in for a run with ?ownEmote=1. No UI exposes this flag.
+        var OWN_EMOTES = /[?&]ownEmote=1/.test(location.search);
         var run = null;
         var round = null;
         var pool = [];
@@ -1291,13 +1299,13 @@ most cases you closed back to back before a miss.
           return false;
         }
 
-        // Pick the 6 statements (clues) for a round. Each round rolls a small
+        // Pick the 5 statements (clues) for a round. Each round rolls a small
         // emote count (1-3, averaged ~1.5); those emote statements are placed
-        // first per the rules (a person's OWN emote A is restricted to the late
-        // slots 5-6, at most one per round; other emotes B/C may go anywhere),
-        // and any that can't be placed are dropped (no minimum). The remaining
-        // slots are filled with plain (D) statements, so plain lines dominate
-        // and rounds vary.
+        // first per the rules (a person's OWN emote A never appears by
+        // default; with ?ownEmote=1 a single own-emote may take slot 5;
+        // other emotes B/C may go anywhere), and any that can't be placed
+        // are dropped (no minimum). The remaining slots are filled with
+        // plain (D) statements, so plain lines dominate and rounds vary.
         // Perindigo's emotes are generic, so they never reveal the answer.
         function drawStatements(person) {
           var stmts = (person.statements || []).slice();
@@ -1335,19 +1343,19 @@ most cases you closed back to back before a miss.
           var r = Math.random();
           var emoteCount = r < 0.5 ? 1 : (r < 0.8 ? 2 : 3);
 
-          var assigned = [null, null, null, null, null, null];
+          var assigned = [null, null, null, null, null];
 
-          // Emote pass first, per the rules. Own-emote (A) only fits late slots
-          // (5-6); other emotes (B/C) fit anywhere. At most ONE own-emote per
-          // round so the answer can't be given away twice. Unplaceable emotes
-          // are ignored (no minimum) so rounds stay random.
+          // Emote pass first, per the rules. Own-emote (A) clues are disabled
+          // by default; with ?ownEmote=1 one own-emote may take slot 5.
+          // Other emotes (B/C) fit anywhere. Unplaceable emotes are ignored
+          // (no minimum) so rounds stay random.
           var ownUsed = false;
           for (var e = 0; e < emoteCount; e++) {
-            var pools = shuffle(ownUsed ? [B, C] : [A, B, C]);
+            var pools = shuffle((!OWN_EMOTES || ownUsed) ? [B, C] : [A, B, C]);
             var emote = null;
             for (var k = 0; k < pools.length; k++) { emote = take(pools[k]); if (emote) break; }
             if (!emote) break;
-            var valid = isOwn(emote) ? [4, 5] : [0, 1, 2, 3, 4, 5];
+            var valid = isOwn(emote) ? [4] : [0, 1, 2, 3, 4];
             var free = valid.filter(function (idx) { return assigned[idx] === null; });
             if (!free.length) continue;
             assigned[free[Math.floor(Math.random() * free.length)]] = emote;
@@ -1355,10 +1363,11 @@ most cases you closed back to back before a miss.
           }
 
           // Plain fill: every remaining slot gets a plain (D) statement.
-          // The last-resort fallback skips own-emotes while the cap is unspent
-          // space allows, so a thin D pool can't leak a second own-emote in.
-          for (var i = 0; i < 6; i++) {
-            if (assigned[i] === null) assigned[i] = take(D) || anyUnused(ownUsed) || anyUnused(false);
+          // The last-resort fallback keeps own-emotes out unless ?ownEmote=1
+          // is set (and the one-per-round cap unspent), so a thin D pool
+          // can't leak a revealing clue in through the back door.
+          for (var i = 0; i < 5; i++) {
+            if (assigned[i] === null) assigned[i] = take(D) || anyUnused(!OWN_EMOTES || ownUsed) || (OWN_EMOTES ? anyUnused(false) : null);
           }
           return assigned.map(function (x) { return x == null ? "" : x; });
         }

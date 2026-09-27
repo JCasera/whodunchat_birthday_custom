@@ -40,7 +40,7 @@ then open `http://localhost:8000`.
   followedAt: "2021-03-14",         // date followed -> hint: newer/older follower
   subMonths: 18,                    // months subbed -> hint: subbed longer/less (null = not a sub)
   messages: 1240,                   // chat participation -> hint: talks more/less
-  statements: [ "...", "...", ... ], // chat lines; at least 4
+  statements: [ "...", "...", ... ], // chat lines; at least 5
   videoWin:  "https://drive.google.com/file/d/FILE_ID/view?usp=sharing", // optional (Phase 3)
   videoLose: "https://drive.google.com/file/d/FILE_ID/view?usp=sharing",  // optional (Phase 3)
   videoAltWin:  "Victory video coming soon!",  // optional fallback text (win)
@@ -48,7 +48,7 @@ then open `http://localhost:8000`.
 }
 ```
 
-- Every roster person needs at least **4 statements**; extra ones are never shown to the player.
+- Every roster person needs at least **5 statements**; extra ones are never shown to the player.
 - `videoWin` / `videoLose` are for Phase 3 (outcome videos). Share the file as **Anyone with the link → Viewer**, then paste the share link. `REPLACE_WIN` / `REPLACE_LOSE` are placeholders — any URL containing `REPLACE_` is treated as "no video" and the embed is skipped.
 - `videoAltWin` / `videoAltLose` are the fallback texts shown in place of the player when no video link is set (`null`, blank, `REPLACE_`, or unparseable) — win and lose versions respectively. Edit them per person in `data.js` (they are also emitted by `build_roster.py` / `build_perindigo.py`, so rebuilds keep them). Omit one to fall back to "Video unavailable."
 - On load, the app validates the data and prints warnings to the browser console (F12) if anything is off.
@@ -76,8 +76,14 @@ Decoys may carry the same hint stats as roster people (`followedAt`, `subMonths`
   - `subMonths` — longer / shorter / about as long (within ±1 month)
   - `messages` — more / less / about as much (within ±25%)
   - if the guess has no comparable stats → "nothing to compare"
-- **Four misses** → the suspect walks and the answer is revealed. After any round you are taken to the **outcome page**: the win/lose video (Drive `/preview` embed, if a real link is set), who the answer was with their profile stats, guesses used, run progress and streak, plus **continue** (next case) and **back to the front page** buttons.
+- **Five misses** → the suspect walks and the answer is revealed. After any round you are taken to the **outcome page**: the win/lose video (Drive `/preview` embed, if a real link is set), who the answer was with their profile stats, guesses used, run progress and streak, plus **continue** (next case) and **back to the front page** buttons.
 - A win streak (consecutive wins) and per-person records (guesses + identified/walked) are tracked and shown on the front page and the **case statistics** screen.
+- Clue selection never shows a person's own emotes by default; append `?ownEmote=1` to the page URL to allow one own-emote clue (slot 5) per round.
+
+## URL flags (testing)
+
+- `?debug=1` — shows the debug bar (answer reveal + clue stepper). No UI exposes it.
+- `?ownEmote=1` — allows own-emote clues as above. Off unless present.
 
 ## Progress & reset
 
